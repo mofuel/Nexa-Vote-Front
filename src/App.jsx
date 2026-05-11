@@ -5,6 +5,7 @@ import RegistroIdentidad from './pages/registro/RegistroIdentidad'
 import RegistroReconocimiento from './pages/registro/RegistroReconocimiento'
 import RegistroBiometrico from './pages/registro/RegistroBiometrico'
 import ConfirmacionRegistro from './pages/registro/ConfirmacionRegistro'
+import LoginAdmin from './pages/admin/LoginAdmin'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/registro/reconocimiento" element={<RegistroReconocimiento />} />
         <Route path='/registro/biometrico' element={<RegistroBiometrico />} />
         <Route path='/registro/verificacion' element={<ConfirmacionRegistro />} />
+        <Route path='/loginadmin' element={<LoginAdmin />} />
       </Routes>
     </BrowserRouter>
   )

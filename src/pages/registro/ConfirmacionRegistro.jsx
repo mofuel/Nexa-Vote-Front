@@ -18,8 +18,6 @@ const steps = [
 
 export default function ConfirmacionRegistro() {
     const navigate = useNavigate();
-    const currentStep = 4; // Paso actual es Verificación
-
     return (
         <div style={{ background: '#14121c', color: '#e6e0ef', minHeight: '100vh', fontFamily: 'Inter, sans-serif', display: 'flex', flexDirection: 'column' }}>
 
