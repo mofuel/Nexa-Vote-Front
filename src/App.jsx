@@ -7,6 +7,7 @@ import RegistroBiometrico from './pages/registro/RegistroBiometrico'
 import ConfirmacionRegistro from './pages/registro/ConfirmacionRegistro'
 import LoginAdmin from './pages/admin/LoginAdmin'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import ControlVotacionAdmin from './pages/admin/ControlVotacionAdmin'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path='/registro/verificacion' element={<ConfirmacionRegistro />} />
         <Route path='/loginadmin' element={<LoginAdmin />} />
         <Route path='/admindash' element={<AdminDashboard />} />
+        <Route path='/contvotadmin' element={<ControlVotacionAdmin />} />
       </Routes>
     </BrowserRouter>
   )

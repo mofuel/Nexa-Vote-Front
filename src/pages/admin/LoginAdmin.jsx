@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// --- ESTILOS COMPARTIDOS (Basados en tu sistema de diseño) ---
+
 const glassPanel = {
     background: 'rgba(19, 22, 42, 0.8)',
     backdropFilter: 'blur(12px)',
