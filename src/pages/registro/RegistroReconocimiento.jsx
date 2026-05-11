@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useRef, useState, useEffect, useCallback } from 'react'
+import Stepper from '../components/ui/Stepper'
 
 const glassCard = {
     background: 'rgba(19, 22, 42, 0.8)',
@@ -7,16 +8,7 @@ const glassCard = {
     border: '1px solid rgba(255, 255, 255, 0.06)',
 }
 
-const labelStyle = {
-    display: 'block',
-    fontFamily: 'Space Grotesk, sans-serif',
-    fontSize: '12px',
-    color: '#c9c3d9',
-    letterSpacing: '0.1em',
-    fontWeight: 500,
-    textTransform: 'uppercase',
-    marginBottom: '8px',
-}
+
 
 const steps = [
     { n: 1, label: 'Identidad' },
@@ -45,7 +37,6 @@ export default function RegistroReconocimiento() {
     const videoRef = useRef(null)
     const canvasRef = useRef(null)
     const streamRef = useRef(null)
-    const currentStep = 2
 
     const [cameraState, setCameraState] = useState('idle') // idle | active | captured | error
     const [capturedImage, setCapturedImage] = useState(null)
@@ -179,45 +170,7 @@ export default function RegistroReconocimiento() {
                     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
 
                         {/* Progress Stepper */}
-                        <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                            {steps.map((step, i) => (
-                                <div key={step.n} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 'unset' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', minWidth: '80px' }}>
-                                        <div style={{
-                                            width: '40px', height: '40px', borderRadius: '50%',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700,
-                                            ...(step.n === currentStep
-                                                ? { background: '#6c47ff', color: '#fff', boxShadow: '0 0 0 4px rgba(108,71,255,0.2)' }
-                                                : step.n < currentStep
-                                                    ? { background: 'rgba(65,238,194,0.15)', color: '#41eec2', border: '2px solid #41eec2' }
-                                                    : { border: '2px solid rgba(255,255,255,0.2)', color: '#c9c3d9', opacity: 0.4 }
-                                            ),
-                                        }}>
-                                            {step.n < currentStep
-                                                ? <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check</span>
-                                                : step.n}
-                                        </div>
-                                        <span style={{
-                                            fontFamily: 'Space Grotesk, sans-serif', fontSize: '12px', fontWeight: 600,
-                                            letterSpacing: '0.05em', textAlign: 'center',
-                                            color: step.n === currentStep ? '#c9beff' : step.n < currentStep ? '#41eec2' : '#c9c3d9',
-                                            opacity: step.n > currentStep ? 0.4 : 1,
-                                        }}>
-                                            {step.label}
-                                        </span>
-                                    </div>
-                                    {i < steps.length - 1 && (
-                                        <div style={{
-                                            flex: 1, height: '1px',
-                                            background: step.n < currentStep ? 'rgba(65,238,194,0.4)' : 'rgba(255,255,255,0.1)',
-                                            marginBottom: '24px', marginLeft: '8px', marginRight: '8px',
-                                            transition: 'background 0.4s',
-                                        }} />
-                                    )}
-                                </div>
-                            ))}
-                        </nav>
+                        <Stepper steps={steps} currentStep={2} />
 
                         {/* Title */}
                         <div style={{ textAlign: 'center' }}>

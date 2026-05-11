@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import Stepper from '../components/ui/Stepper'
 
 const glassCard = {
   background: 'rgba(19, 22, 42, 0.8)',
@@ -15,8 +16,6 @@ const steps = [
 
 export default function RegistroBiometrico() {
   const navigate = useNavigate()
-  const currentStep = 3
-
   return (
     <div style={{
       background: '#14121c',
@@ -82,54 +81,7 @@ export default function RegistroBiometrico() {
         }}>
 
           {/* STEPPER */}
-          <nav style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            {steps.map((step, i) => (
-              <div key={step.n} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 'unset' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontFamily: 'Space Grotesk, sans-serif',
-                    fontWeight: 700,
-                    ...(step.n === currentStep
-                      ? { background: '#6c47ff', color: '#fff', boxShadow: '0 0 0 4px rgba(108,71,255,0.2)' }
-                      : step.n < currentStep
-                        ? { background: 'rgba(65,238,194,0.15)', color: '#41eec2' }
-                        : { border: '2px solid rgba(255,255,255,0.2)', color: '#c9c3d9', opacity: 0.4 }
-                    )
-                  }}>
-                    {step.n < currentStep ? '✓' : step.n}
-                  </div>
-
-                  <span style={{
-                    fontFamily: 'Space Grotesk, sans-serif',
-                    fontSize: '12px',
-                    color: step.n === currentStep ? '#c9beff' : '#c9c3d9'
-                  }}>
-                    {step.label}
-                  </span>
-                </div>
-
-                {i < steps.length - 1 && (
-                  <div style={{
-                    flex: 1,
-                    height: '1px',
-                    background: step.n < currentStep ? 'rgba(65,238,194,0.4)' : 'rgba(255,255,255,0.1)',
-                    margin: '0 8px'
-                  }} />
-                )}
-              </div>
-            ))}
-          </nav>
+          <Stepper steps={steps} currentStep={3} />
 
           {/* CARD */}
           <section style={{
