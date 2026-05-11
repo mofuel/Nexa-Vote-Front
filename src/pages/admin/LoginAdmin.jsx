@@ -14,7 +14,7 @@ const inputStyle = {
     transition: 'all 0.3s ease',
 };
 
-export default function AdminLogin() {
+export default function LoginAdmin() {
     const navigate = useNavigate();
     const [credentials, setCredentials] = useState({ username: '', password: '' });
 
