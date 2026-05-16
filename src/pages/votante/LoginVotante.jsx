@@ -115,7 +115,7 @@ export default function LoginVotante() {
 
               {/* Submit button */}
               <button
-                onClick={() => navigate('/votante/validacion')}
+                onClick={() => navigate('/mfa/escaneo')}
                 style={{
                   marginTop: '8px',
                   background: '#6c47ff', color: '#fff', border: 'none',
