@@ -10,6 +10,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import ControlVotacionAdmin from './pages/admin/ControlVotacionAdmin'
 import GestionVotantesAdmin from './pages/admin/GestionVotantesAdmin'
 import MFAPaso1DNI from './pages/votante/Mfapaso1dni'
+import MFAPaso2Facial from './pages/votante/Mfapaso2facial'
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path='/admin/resultados' element={<ControlVotacionAdmin />} />
         <Route path='/admin/votantes' element={<GestionVotantesAdmin />} />
         <Route path='/mfa/escaneo' element={<MFAPaso1DNI />} />
+        <Route path='/mfa/facial' element={<MFAPaso2Facial />} />
       </Routes>
     </BrowserRouter>
   )
