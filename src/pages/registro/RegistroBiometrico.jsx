@@ -1,207 +1,289 @@
-import { useNavigate } from 'react-router-dom'
-import Stepper from '../components/ui/Stepper'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const glassCard = {
-  background: 'rgba(19, 22, 42, 0.8)',
-  backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
-}
+const RegistroBiometrico = () => {
+  const navigate = useNavigate();
 
-const steps = [
-  { n: 1, label: 'Identidad' },
-  { n: 2, label: 'Facial' },
-  { n: 3, label: 'Biométrico' },
-  { n: 4, label: 'Verificación' },
-]
+  const [registrado, setRegistrado] = useState(false);
+  const [mensaje, setMensaje] = useState("");
+  const [loading, setLoading] = useState(false);
 
-export default function RegistroBiometrico() {
-  const navigate = useNavigate()
+  const generarChallenge = () => {
+    const array = new Uint8Array(32);
+    window.crypto.getRandomValues(array);
+    return array;
+  };
+
+  const registrarBiometrico = async () => {
+    try {
+      setMensaje("");
+      setLoading(true);
+
+      if (!window.PublicKeyCredential) {
+        setMensaje("Tu navegador no soporta WebAuthn.");
+        return;
+      }
+
+      const publicKey = {
+        challenge: generarChallenge(),
+        rp: {
+          name: "Nexa Vote",
+        },
+        user: {
+          id: generarChallenge(),
+          name: "votante@nexavote.com",
+          displayName: "Votante Nexa Vote",
+        },
+        pubKeyCredParams: [
+          {
+            type: "public-key",
+            alg: -7,
+          },
+          {
+            type: "public-key",
+            alg: -257,
+          },
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: "platform",
+          userVerification: "required",
+        },
+        timeout: 60000,
+        attestation: "none",
+      };
+
+      const credential = await navigator.credentials.create({
+        publicKey,
+      });
+
+      if (!credential) {
+        setMensaje("No se pudo registrar la biometría.");
+        return;
+      }
+
+      localStorage.setItem("nexa_vote_biometrico", "true");
+
+      setRegistrado(true);
+      setMensaje("✅ Huella o biometría registrada correctamente.");
+    } catch (error) {
+      console.error("Error WebAuthn:", error);
+
+      if (error.name === "NotAllowedError") {
+        setMensaje("Operación cancelada o tiempo agotado.");
+      } else if (error.name === "NotSupportedError") {
+        setMensaje("Este dispositivo no soporta autenticación biométrica.");
+      } else {
+        setMensaje("No se pudo registrar la biometría en este dispositivo.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const continuar = () => {
+    navigate("/registro/verificacion");
+  };
+
   return (
-    <div style={{
-      background: '#14121c',
-      color: '#e6e0ef',
-      minHeight: '100vh',
-      fontFamily: 'Inter, sans-serif',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+    <div style={styles.page}>
+      <header style={styles.navbar}>
+        <h2 style={styles.logo}>NEXA VOTE</h2>
 
-      {/* HEADER */}
-      <header style={{
-        position: 'fixed',
-        top: 0,
-        width: '100%',
-        zIndex: 50,
-        background: 'rgba(20,18,28,0.8)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-        height: '64px',
-        display: 'flex',
-        alignItems: 'center',
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '0 40px',
-          width: '100%',
-          maxWidth: '1280px',
-          margin: '0 auto',
-        }}>
-          <span
-            onClick={() => navigate('/')}
-            style={{
-              fontFamily: 'Space Grotesk, sans-serif',
-              fontWeight: 700,
-              fontSize: '20px',
-              color: '#c9beff',
-              letterSpacing: '0.15em',
-              cursor: 'pointer'
-            }}
-          >
-            NEXA VOTE
-          </span>
-
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <span className="material-symbols-outlined" style={{ color: '#41eec2' }}>lock</span>
-            <span className="material-symbols-outlined" style={{ color: '#41eec2' }}>verified_user</span>
-          </div>
+        <div style={styles.navIcons}>
+          <span>🔒</span>
+          <span>🛡️</span>
         </div>
       </header>
 
-      {/* MAIN */}
-      <main style={{ paddingTop: '96px', paddingBottom: '48px', flex: 1 }}>
-        <div style={{
-          maxWidth: '800px',
-          margin: '0 auto',
-          padding: '0 24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '32px'
-        }}>
+      <main style={styles.container}>
+        <section style={styles.card}>
+          <h1 style={styles.title}>Biometría - WebAuthn</h1>
 
-          {/* STEPPER */}
-          <Stepper steps={steps} currentStep={3} />
+          <p style={styles.subtitle}>
+            Vincule su huella o llave de seguridad para continuar
+          </p>
 
-          {/* CARD */}
-          <section style={{
-            ...glassCard,
-            borderRadius: '16px',
-            padding: '32px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '24px'
-          }}>
+          <div style={styles.fingerprintCircle}>
+            <span style={styles.fingerprint}>🌀</span>
+          </div>
 
-            {/* TITLE */}
-            <div style={{ textAlign: 'center' }}>
-              <h1 style={{
-                fontFamily: 'Space Grotesk, sans-serif',
-                fontSize: '28px',
-                marginBottom: '8px'
-              }}>
-                Biometría - WebAuthn
-              </h1>
+          <div style={styles.badges}>
+            <span style={styles.badge}>FIDO2 COMPATIBLE</span>
+            <span style={styles.badge}>U2F COMPATIBLE</span>
+            <span style={styles.badge}>AES-256 COMPATIBLE</span>
+          </div>
 
-              <p style={{ color: '#c9c3d9', fontSize: '14px' }}>
-                Vincule su huella o llave de seguridad para continuar
-              </p>
-            </div>
+          <div style={styles.infoBox}>
+            WebAuthn utiliza criptografía de clave pública. Sus datos biométricos
+            nunca salen del dispositivo.
+          </div>
 
-            {/* FINGERPRINT VISUAL */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              padding: '20px'
-            }}>
-              <div style={{
-                width: '180px',
-                height: '180px',
-                borderRadius: '50%',
-                border: '2px dashed rgba(108,71,255,0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'rgba(108,71,255,0.05)'
-              }}>
-                <span className="material-symbols-outlined" style={{
-                  fontSize: '64px',
-                  color: '#c9beff'
-                }}>
-                  fingerprint
-                </span>
-              </div>
-            </div>
+          <button
+            onClick={registrarBiometrico}
+            disabled={loading || registrado}
+            style={{
+              ...styles.primaryButton,
+              opacity: loading || registrado ? 0.7 : 1,
+              cursor: loading || registrado ? "not-allowed" : "pointer",
+            }}
+          >
+            {loading
+              ? "Esperando validación biométrica..."
+              : registrado
+              ? "Biometría registrada"
+              : "Registrar Biométrico"}
+          </button>
 
-            {/* BADGES */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              {['FIDO2', 'U2F', 'AES-256'].map(t => (
-                <div key={t} style={{
-                  padding: '6px 12px',
-                  borderRadius: '999px',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  fontSize: '11px',
-                  color: '#c9c3d9'
-                }}>
-                  {t} COMPATIBLE
-                </div>
-              ))}
-            </div>
+          <button
+            onClick={continuar}
+            disabled={!registrado}
+            style={{
+              ...styles.secondaryButton,
+              opacity: registrado ? 1 : 0.5,
+              cursor: registrado ? "pointer" : "not-allowed",
+            }}
+          >
+            Siguiente →
+          </button>
 
-            {/* INFO */}
-            <div style={{
-              background: 'rgba(108,71,255,0.08)',
-              borderLeft: '3px solid #6c47ff',
-              padding: '12px'
-            }}>
-              <p style={{ fontSize: '13px', color: '#c9c3d9' }}>
-                WebAuthn utiliza criptografía de clave pública. Sus datos biométricos nunca salen del dispositivo.
-              </p>
-            </div>
-
-            {/* BUTTONS */}
-            <button style={{
-              padding: '14px',
-              borderRadius: '12px',
-              background: '#6c47ff',
-              border: 'none',
-              color: '#fff',
-              fontFamily: 'Space Grotesk',
-              cursor: 'pointer'
-            }}>
-              Registrar Biométrico
-            </button>
-
-            <button
-              onClick={() => navigate('/registro/verificacion')}
-              style={{
-                padding: '14px',
-                borderRadius: '12px',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: '#c9c3d9',
-                cursor: 'pointer'
-              }}
-            >
-              Siguiente →
-            </button>
-
-          </section>
-
-        </div>
+          {mensaje && <div style={styles.message}>{mensaje}</div>}
+        </section>
       </main>
-
-      {/* FOOTER */}
-      <footer style={{
-        padding: '24px',
-        borderTop: '1px solid rgba(255,255,255,0.05)',
-        textAlign: 'center',
-        fontSize: '12px',
-        color: '#c9c3d9'
-      }}>
-        © 2024 NEXA VOTE • AES-256 Encrypted
-      </footer>
-
     </div>
-  )
-}
+  );
+};
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background: "#11101a",
+    color: "#f8fafc",
+    fontFamily: "Inter, system-ui, Arial, sans-serif",
+  },
+
+  navbar: {
+    height: "90px",
+    padding: "0 90px",
+    borderBottom: "1px solid rgba(148, 163, 184, 0.18)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  logo: {
+    color: "#c4b5fd",
+    letterSpacing: "6px",
+    fontSize: "22px",
+  },
+
+  navIcons: {
+    display: "flex",
+    gap: "18px",
+    color: "#2dd4bf",
+    fontSize: "22px",
+  },
+
+  container: {
+    minHeight: "calc(100vh - 90px)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "30px",
+  },
+
+  card: {
+    width: "100%",
+    maxWidth: "760px",
+    background: "#151726",
+    border: "1px solid rgba(148, 163, 184, 0.16)",
+    borderRadius: "24px",
+    padding: "42px",
+    textAlign: "center",
+    boxShadow: "0 24px 70px rgba(0,0,0,0.35)",
+  },
+
+  title: {
+    fontSize: "32px",
+    margin: 0,
+    fontWeight: "800",
+  },
+
+  subtitle: {
+    color: "#cbd5e1",
+    marginTop: "12px",
+  },
+
+  fingerprintCircle: {
+    width: "190px",
+    height: "190px",
+    borderRadius: "50%",
+    border: "2px dashed #4f46e5",
+    margin: "50px auto",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "rgba(79, 70, 229, 0.08)",
+  },
+
+  fingerprint: {
+    fontSize: "64px",
+  },
+
+  badges: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "14px",
+    flexWrap: "wrap",
+    marginBottom: "26px",
+  },
+
+  badge: {
+    border: "1px solid rgba(148, 163, 184, 0.25)",
+    borderRadius: "999px",
+    padding: "8px 16px",
+    fontSize: "13px",
+    color: "#cbd5e1",
+  },
+
+  infoBox: {
+    background: "rgba(88, 28, 135, 0.28)",
+    borderLeft: "4px solid #7c3aed",
+    padding: "16px",
+    textAlign: "left",
+    color: "#ddd6fe",
+    marginBottom: "28px",
+  },
+
+  primaryButton: {
+    width: "100%",
+    border: "none",
+    borderRadius: "14px",
+    padding: "16px",
+    background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+    color: "#fff",
+    fontWeight: "800",
+    marginBottom: "18px",
+  },
+
+  secondaryButton: {
+    width: "100%",
+    border: "1px solid rgba(148, 163, 184, 0.25)",
+    borderRadius: "14px",
+    padding: "16px",
+    background: "#232436",
+    color: "#f8fafc",
+    fontWeight: "700",
+  },
+
+  message: {
+    marginTop: "22px",
+    padding: "16px",
+    borderRadius: "14px",
+    background: "rgba(15, 23, 42, 0.9)",
+    border: "1px solid rgba(148, 163, 184, 0.2)",
+    color: "#e0f2fe",
+    fontWeight: "700",
+  },
+};
+
+export default RegistroBiometrico;
