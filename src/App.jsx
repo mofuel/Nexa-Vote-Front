@@ -11,6 +11,7 @@ import ControlVotacionAdmin from './pages/admin/ControlVotacionAdmin'
 import GestionVotantesAdmin from './pages/admin/GestionVotantesAdmin'
 import MFAPaso1DNI from './pages/votante/Mfapaso1dni'
 import MFAPaso2Facial from './pages/votante/Mfapaso2facial'
+import MFAPaso3WebAuthn from './pages/votante/Mfapaso3webauthn '
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path='/admin/votantes' element={<GestionVotantesAdmin />} />
         <Route path='/mfa/escaneo' element={<MFAPaso1DNI />} />
         <Route path='/mfa/facial' element={<MFAPaso2Facial />} />
+        <Route path='/mfa/webauthn' element={<MFAPaso3WebAuthn />} />
       </Routes>
     </BrowserRouter>
   )
