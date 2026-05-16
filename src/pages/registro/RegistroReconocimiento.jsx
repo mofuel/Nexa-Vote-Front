@@ -1,505 +1,335 @@
-import { useNavigate } from 'react-router-dom'
-import { useRef, useState, useEffect, useCallback } from 'react'
-import Stepper from '../components/ui/Stepper'
+import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Webcam from "react-webcam";
+import axios from "axios";
 
-const glassCard = {
-    background: 'rgba(19, 22, 42, 0.8)',
-    backdropFilter: 'blur(12px)',
-    border: '1px solid rgba(255, 255, 255, 0.06)',
-}
+const API_URL = "http://127.0.0.1:5000/api/reconocimiento/facial";
 
+const RegistroReconocimiento = () => {
+  const webcamRef = useRef(null);
+  const navigate = useNavigate();
 
+  const [imagen, setImagen] = useState(null);
+  const [mensaje, setMensaje] = useState("");
+  const [loading, setLoading] = useState(false);
 
-const steps = [
-    { n: 1, label: 'Identidad' },
-    { n: 2, label: 'Facial' },
-    { n: 3, label: 'Biométrico' },
-    { n: 4, label: 'Verificación' },
-]
+  const capturarImagen = async () => {
+    try {
+      setMensaje("");
+      setLoading(true);
 
-// Scanning animation line
-function ScanLine() {
-    return (
-        <div style={{
-            position: 'absolute',
-            top: 0, left: 0, right: 0,
-            height: '2px',
-            background: 'linear-gradient(90deg, transparent, #c9beff, transparent)',
-            animation: 'scanLine 3s linear infinite',
-            zIndex: 10,
-            pointerEvents: 'none',
-        }} />
-    )
-}
+      const screenshot = webcamRef.current?.getScreenshot();
 
-export default function RegistroReconocimiento() {
-    const navigate = useNavigate()
-    const videoRef = useRef(null)
-    const canvasRef = useRef(null)
-    const streamRef = useRef(null)
+      if (!screenshot) {
+        setMensaje("No se pudo capturar la imagen. Verifica permisos de cámara.");
+        return;
+      }
 
-    const [cameraState, setCameraState] = useState('idle') // idle | active | captured | error
-    const [capturedImage, setCapturedImage] = useState(null)
-    const [checks, setChecks] = useState({
-        neutral: false,
-        lighting: false,
-        centered: false,
-    })
+      setImagen(screenshot);
 
-    // Simulate detection checks when camera is active
-    useEffect(() => {
-        if (cameraState !== 'active') return
-        const t1 = setTimeout(() => setChecks(c => ({ ...c, neutral: true })), 1200)
-        const t2 = setTimeout(() => setChecks(c => ({ ...c, lighting: true })), 2000)
-        const t3 = setTimeout(() => setChecks(c => ({ ...c, centered: true })), 2800)
-        return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
-    }, [cameraState])
-
-    const startCamera = useCallback(async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 } })
-            streamRef.current = stream
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream
-                videoRef.current.play()
-            }
-            setCameraState('active')
-            setChecks({ neutral: false, lighting: false, centered: false })
-            setCapturedImage(null)
-        } catch {
-            setCameraState('error')
+      const response = await axios.post(
+        API_URL,
+        {
+          imagen: screenshot,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          timeout: 10000,
         }
-    }, [])
+      );
 
-    const stopCamera = useCallback(() => {
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(t => t.stop())
-            streamRef.current = null
-        }
-    }, [])
+      if (response.data?.success) {
+        setMensaje("✅ Rostro registrado correctamente.");
+      } else {
+        setMensaje(response.data?.message || "❌ No se pudo validar el rostro.");
+      }
+    } catch (error) {
+      console.error("Error reconocimiento facial:", error);
 
-    const capturePhoto = useCallback(() => {
-        if (!videoRef.current || !canvasRef.current) return
-        const video = videoRef.current
-        const canvas = canvasRef.current
-        canvas.width = video.videoWidth || 640
-        canvas.height = video.videoHeight || 480
-        const ctx = canvas.getContext('2d')
-        ctx.drawImage(video, 0, 0)
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.9)
-        setCapturedImage(dataUrl)
-        setCameraState('captured')
-        stopCamera()
-    }, [stopCamera])
+      if (error.code === "ECONNABORTED") {
+        setMensaje("El servidor tardó demasiado en responder.");
+      } else if (error.response) {
+        setMensaje(error.response.data?.message || "Error en el servidor.");
+      } else {
+        setMensaje(
+          "No se pudo conectar con el backend. Verifica que python run.py esté activo."
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const retake = useCallback(() => {
-        setCapturedImage(null)
-        startCamera()
-    }, [startCamera])
+  const repetirCaptura = () => {
+    setImagen(null);
+    setMensaje("");
+  };
 
-    // Cleanup on unmount
-    useEffect(() => () => stopCamera(), [stopCamera])
+  const continuar = () => {
+    navigate("/registro/biometrico");
+  };
 
+  return (
+    <div style={styles.page}>
+      <div style={styles.card}>
+        <div style={styles.header}>
+          <div style={styles.icon}>🧬</div>
 
+          <h1 style={styles.title}>Registro Biométrico Facial</h1>
 
-    return (
-        <>
-            <style>{`
-        @keyframes scanLine {
-          0%   { transform: translateY(0); }
-          100% { transform: translateY(calc(100vh)); }
-        }
-        @keyframes pulse-ring {
-          0%, 100% { opacity: 0.3; }
-          50%       { opacity: 0.8; }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .check-item { animation: fadeIn 0.3s ease forwards; }
-      `}</style>
+          <p style={styles.subtitle}>
+            Validación multifactor para el sistema Nexa Vote
+          </p>
+        </div>
 
-            <div style={{ background: '#14121c', color: '#e6e0ef', minHeight: '100vh', fontFamily: 'Inter, sans-serif', display: 'flex', flexDirection: 'column' }}>
+        <div style={styles.cameraContainer}>
+          {!imagen ? (
+            <Webcam
+              ref={webcamRef}
+              audio={false}
+              screenshotFormat="image/jpeg"
+              videoConstraints={{
+                width: 640,
+                height: 480,
+                facingMode: "user",
+              }}
+              style={styles.webcam}
+            />
+          ) : (
+            <img src={imagen} alt="Captura facial" style={styles.webcam} />
+          )}
 
-                {/* HEADER */}
-                <header style={{
-                    position: 'fixed',
-                    top: 0,
-                    width: '100%',
-                    zIndex: 50,
-                    background: 'rgba(20,18,28,0.8)',
-                    backdropFilter: 'blur(20px)',
-                    borderBottom: '1px solid rgba(255,255,255,0.1)',
-                    height: '64px',
-                    display: 'flex',
-                    alignItems: 'center',
-                }}>
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '0 40px',
-                        width: '100%',
-                        maxWidth: '1280px',
-                        margin: '0 auto',
-                    }}>
-                        <span
-                            onClick={() => navigate('/')}
-                            style={{
-                                fontFamily: 'Space Grotesk, sans-serif',
-                                fontWeight: 700,
-                                fontSize: '20px',
-                                color: '#c9beff',
-                                letterSpacing: '0.15em',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            NEXA VOTE
-                        </span>
+          <div style={styles.scanFrame}></div>
+        </div>
 
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <span className="material-symbols-outlined" style={{ color: '#41eec2' }}>lock</span>
-                            <span className="material-symbols-outlined" style={{ color: '#41eec2' }}>verified_user</span>
-                        </div>
-                    </div>
-                </header>
+        <div style={styles.infoBox}>
+          <p style={styles.infoText}>
+            Coloca tu rostro dentro del recuadro y mantén una buena iluminación.
+          </p>
+        </div>
 
-                {/* Main */}
-                <main style={{ paddingTop: '96px', paddingBottom: '48px', flex: 1 }}>
-                    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        <div style={styles.buttons}>
+          {!imagen ? (
+            <button
+              onClick={capturarImagen}
+              disabled={loading}
+              style={{
+                ...styles.primaryButton,
+                opacity: loading ? 0.7 : 1,
+                cursor: loading ? "not-allowed" : "pointer",
+              }}
+            >
+              {loading ? "Procesando..." : "Iniciar Reconocimiento"}
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={repetirCaptura}
+                disabled={loading}
+                style={{
+                  ...styles.secondaryButton,
+                  opacity: loading ? 0.7 : 1,
+                  cursor: "pointer",
+                }}
+              >
+                Repetir captura
+              </button>
 
-                        {/* Progress Stepper */}
-                        <Stepper steps={steps} currentStep={2} />
+              <button
+                onClick={capturarImagen}
+                disabled={loading}
+                style={{
+                  ...styles.primaryButton,
+                  opacity: loading ? 0.7 : 1,
+                  cursor: "pointer",
+                }}
+              >
+                {loading ? "Procesando..." : "Enviar nuevamente"}
+              </button>
+            </>
+          )}
+        </div>
 
-                        {/* Title */}
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{
-                                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                                padding: '4px 14px', background: 'rgba(108,71,255,0.1)',
-                                borderRadius: '999px', border: '1px solid rgba(108,71,255,0.2)',
-                                marginBottom: '16px',
-                            }}>
-                                <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '10px', color: '#c9beff', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Paso 2</span>
-                                <span style={{ width: '3px', height: '3px', background: '#6c47ff', borderRadius: '50%' }} />
-                                <span className="material-symbols-outlined" style={{ color: '#c9beff', fontSize: '12px' }}>security</span>
-                                <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '10px', color: '#c9c3d9', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Encriptado AES-256</span>
-                            </div>
-                            <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '28px', color: '#fff', marginBottom: '12px' }}>
-                                Reconocimiento Facial
-                            </h1>
-                            <p style={{ color: '#c9c3d9', fontSize: '16px', lineHeight: '24px', maxWidth: '480px', margin: '0 auto' }}>
-                                Posicione su rostro dentro del marco para completar la validación de identidad institucional.
-                            </p>
-                        </div>
+        {mensaje && (
+          <>
+            <div style={styles.message}>{mensaje}</div>
 
-                        {/* Camera Section */}
-                        <section style={{ ...glassCard, borderRadius: '16px', padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {mensaje.includes("✅") && (
+              <div style={styles.continueContainer}>
+                <button
+                  onClick={continuar}
+                  style={styles.continueButton}
+                >
+                  Continuar a validación biométrica →
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
 
-                            {/* Camera viewport */}
-                            <div style={{
-                                position: 'relative',
-                                width: '100%',
-                                aspectRatio: '4/3',
-                                borderRadius: '12px',
-                                overflow: 'hidden',
-                                background: '#0e0d17',
-                                border: '1px solid rgba(255,255,255,0.08)',
-                            }}>
-                                {/* Hidden canvas for capture */}
-                                <canvas ref={canvasRef} style={{ display: 'none' }} />
+const styles = {
+  page: {
+    minHeight: "100vh",
+    width: "100%",
+    background:
+      "radial-gradient(circle at top, #1e3a8a 0%, #020617 45%, #000 100%)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "30px",
+    boxSizing: "border-box",
+    fontFamily: "Inter, system-ui, Arial, sans-serif",
+  },
 
-                                {/* IDLE state */}
-                                {cameraState === 'idle' && (
-                                    <div style={{
-                                        position: 'absolute', inset: 0,
-                                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px',
-                                    }}>
-                                        <div style={{
-                                            width: '80px', height: '80px', borderRadius: '50%',
-                                            background: 'rgba(108,71,255,0.12)',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            border: '1px solid rgba(108,71,255,0.25)',
-                                        }}>
-                                            <span className="material-symbols-outlined" style={{ color: '#6c47ff', fontSize: '40px' }}>face</span>
-                                        </div>
-                                        <div style={{ textAlign: 'center' }}>
-                                            <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '16px', color: '#e6e0ef', marginBottom: '6px' }}>
-                                                Cámara lista
-                                            </p>
-                                            <p style={{ fontSize: '13px', color: '#c9c3d9' }}>Pulse "Iniciar Cámara" para comenzar</p>
-                                        </div>
-                                    </div>
-                                )}
+  card: {
+    width: "100%",
+    maxWidth: "820px",
+    background: "rgba(15, 23, 42, 0.92)",
+    border: "1px solid rgba(148, 163, 184, 0.25)",
+    borderRadius: "28px",
+    padding: "32px",
+    boxShadow: "0 30px 80px rgba(0, 0, 0, 0.45)",
+    backdropFilter: "blur(18px)",
+  },
 
-                                {/* ERROR state */}
-                                {cameraState === 'error' && (
-                                    <div style={{
-                                        position: 'absolute', inset: 0,
-                                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px',
-                                    }}>
-                                        <span className="material-symbols-outlined" style={{ color: '#ffb4ab', fontSize: '48px' }}>videocam_off</span>
-                                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '15px', color: '#ffb4ab', textAlign: 'center', maxWidth: '260px' }}>
-                                            No se pudo acceder a la cámara. Verifique los permisos del navegador.
-                                        </p>
-                                    </div>
-                                )}
+  header: {
+    textAlign: "center",
+    marginBottom: "28px",
+  },
 
-                                {/* ACTIVE state */}
-                                {(cameraState === 'active') && (
-                                    <>
-                                        <video
-                                            ref={videoRef}
-                                            autoPlay
-                                            playsInline
-                                            muted
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }}
-                                        />
-                                        {/* Scan line animation */}
-                                        <ScanLine />
-                                        {/* Face frame overlay */}
-                                        <div style={{
-                                            position: 'absolute', inset: 0,
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            pointerEvents: 'none',
-                                        }}>
-                                            <div style={{
-                                                width: '220px', height: '280px',
-                                                border: '2px solid rgba(201,190,255,0.3)',
-                                                borderRadius: '50% 50% 45% 45%',
-                                                position: 'relative',
-                                                animation: 'pulse-ring 2s ease-in-out infinite',
-                                            }}>
-                                                {/* Corner accents */}
-                                                {[
-                                                    { top: '-2px', left: '-2px', borderTop: '3px solid #c9beff', borderLeft: '3px solid #c9beff', borderTopLeftRadius: '12px' },
-                                                    { top: '-2px', right: '-2px', borderTop: '3px solid #c9beff', borderRight: '3px solid #c9beff', borderTopRightRadius: '12px' },
-                                                    { bottom: '-2px', left: '-2px', borderBottom: '3px solid #c9beff', borderLeft: '3px solid #c9beff', borderBottomLeftRadius: '12px' },
-                                                    { bottom: '-2px', right: '-2px', borderBottom: '3px solid #c9beff', borderRight: '3px solid #c9beff', borderBottomRightRadius: '12px' },
-                                                ].map((s, idx) => (
-                                                    <div key={idx} style={{ position: 'absolute', width: '28px', height: '28px', boxShadow: '0 0 12px rgba(201,190,255,0.35)', ...s }} />
-                                                ))}
-                                                {/* Inner pulse ring */}
-                                                <div style={{
-                                                    position: 'absolute', inset: '12px',
-                                                    border: '1px solid rgba(201,190,255,0.15)',
-                                                    borderRadius: '50% 50% 40% 40%',
-                                                }} />
-                                            </div>
-                                        </div>
-                                        {/* Status chips */}
-                                        <div style={{
-                                            position: 'absolute', bottom: '12px', left: '12px', right: '12px',
-                                            display: 'flex', gap: '8px', flexWrap: 'wrap',
-                                        }}>
-                                            {[
-                                                { key: 'neutral', label: 'Expresión neutra' },
-                                                { key: 'lighting', label: 'Iluminación óptima' },
-                                                { key: 'centered', label: 'Rostro centrado' },
-                                            ].map(({ key, label }) => (
-                                                <div key={key} className={checks[key] ? 'check-item' : ''} style={{
-                                                    display: 'flex', alignItems: 'center', gap: '6px',
-                                                    padding: '4px 10px',
-                                                    background: checks[key] ? 'rgba(65,238,194,0.1)' : 'rgba(20,18,28,0.7)',
-                                                    backdropFilter: 'blur(8px)',
-                                                    borderRadius: '999px',
-                                                    border: checks[key] ? '1px solid rgba(65,238,194,0.3)' : '1px solid rgba(255,255,255,0.1)',
-                                                    transition: 'all 0.35s ease',
-                                                }}>
-                                                    <span style={{
-                                                        width: '6px', height: '6px', borderRadius: '50%',
-                                                        background: checks[key] ? '#41eec2' : '#6c47ff',
-                                                        boxShadow: checks[key] ? '0 0 6px #41eec2' : 'none',
-                                                        transition: 'all 0.35s',
-                                                    }} />
-                                                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '10px', color: checks[key] ? '#41eec2' : '#c9c3d9', letterSpacing: '0.05em' }}>
-                                                        {label}
-                                                    </span>
-                                                    {checks[key] && (
-                                                        <span className="material-symbols-outlined" style={{ color: '#41eec2', fontSize: '12px' }}>check_circle</span>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
+  icon: {
+    width: "64px",
+    height: "64px",
+    margin: "0 auto 14px",
+    borderRadius: "20px",
+    background: "linear-gradient(135deg, #06b6d4, #2563eb)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "30px",
+    boxShadow: "0 12px 30px rgba(37, 99, 235, 0.45)",
+  },
 
-                                {/* CAPTURED state */}
-                                {cameraState === 'captured' && capturedImage && (
-                                    <>
-                                        <img
-                                            src={capturedImage}
-                                            alt="Foto capturada"
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }}
-                                        />
-                                        <div style={{
-                                            position: 'absolute', inset: 0,
-                                            background: 'rgba(65,238,194,0.05)',
-                                            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-                                            paddingBottom: '16px',
-                                        }}>
-                                            <div style={{
-                                                display: 'flex', alignItems: 'center', gap: '8px',
-                                                padding: '8px 20px', background: 'rgba(65,238,194,0.15)',
-                                                backdropFilter: 'blur(12px)', borderRadius: '999px',
-                                                border: '1px solid rgba(65,238,194,0.4)',
-                                            }}>
-                                                <span className="material-symbols-outlined" style={{ color: '#41eec2', fontSize: '18px' }}>check_circle</span>
-                                                <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '13px', color: '#41eec2', fontWeight: 600, letterSpacing: '0.05em' }}>
-                                                    Foto capturada correctamente
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+  title: {
+    color: "#f8fafc",
+    fontSize: "34px",
+    margin: "0",
+    fontWeight: "800",
+    letterSpacing: "-0.5px",
+  },
 
-                            {/* Action buttons */}
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'space-between' }}>
+  subtitle: {
+    color: "#94a3b8",
+    marginTop: "10px",
+    fontSize: "16px",
+  },
 
-                                {/* Left: Start / Retake */}
-                                <div style={{ display: 'flex', gap: '12px' }}>
-                                    {(cameraState === 'idle' || cameraState === 'error') && (
-                                        <button
-                                            onClick={startCamera}
-                                            style={{
-                                                display: 'flex', alignItems: 'center', gap: '8px',
-                                                padding: '12px 28px', background: '#6c47ff',
-                                                borderRadius: '999px', border: 'none', color: '#fff',
-                                                fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '14px',
-                                                cursor: 'pointer', boxShadow: '0 8px 24px rgba(108,71,255,0.3)',
-                                                letterSpacing: '0.05em', transition: 'opacity 0.2s',
-                                            }}
-                                            onMouseOver={e => e.currentTarget.style.opacity = '0.9'}
-                                            onMouseOut={e => e.currentTarget.style.opacity = '1'}
-                                        >
-                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>videocam</span>
-                                            Iniciar Cámara
-                                        </button>
-                                    )}
+  cameraContainer: {
+    position: "relative",
+    width: "100%",
+    maxWidth: "640px",
+    margin: "0 auto",
+    borderRadius: "24px",
+    overflow: "hidden",
+    border: "2px solid rgba(34, 211, 238, 0.5)",
+    boxShadow: "0 0 45px rgba(6, 182, 212, 0.25)",
+    background: "#020617",
+  },
 
-                                    {cameraState === 'active' && (
-                                        <button
-                                            onClick={capturePhoto}
-                                            style={{
-                                                display: 'flex', alignItems: 'center', gap: '8px',
-                                                padding: '12px 28px', background: '#6c47ff',
-                                                borderRadius: '999px', border: 'none', color: '#fff',
-                                                fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '14px',
-                                                cursor: 'pointer', boxShadow: '0 8px 24px rgba(108,71,255,0.3)',
-                                                letterSpacing: '0.05em', transition: 'opacity 0.2s',
-                                            }}
-                                            onMouseOver={e => e.currentTarget.style.opacity = '0.9'}
-                                            onMouseOut={e => e.currentTarget.style.opacity = '1'}
-                                        >
-                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>photo_camera</span>
-                                            Capturar Foto
-                                        </button>
-                                    )}
+  webcam: {
+    width: "100%",
+    height: "auto",
+    display: "block",
+  },
 
-                                    {cameraState === 'captured' && (
-                                        <button
-                                            onClick={retake}
-                                            style={{
-                                                display: 'flex', alignItems: 'center', gap: '8px',
-                                                padding: '12px 24px', background: 'transparent',
-                                                borderRadius: '999px', border: '1px solid rgba(255,255,255,0.15)', color: '#c9c3d9',
-                                                fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '14px',
-                                                cursor: 'pointer', letterSpacing: '0.05em', transition: 'background 0.2s',
-                                            }}
-                                            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                                            onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                                        >
-                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>refresh</span>
-                                            Reintentar
-                                        </button>
-                                    )}
-                                </div>
+  scanFrame: {
+    position: "absolute",
+    inset: "28px",
+    border: "3px solid rgba(34, 211, 238, 0.9)",
+    borderRadius: "22px",
+    boxShadow: "0 0 25px rgba(34, 211, 238, 0.7)",
+    pointerEvents: "none",
+  },
 
-                                {/* Tips */}
-                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                    {['Luz Natural', 'Sin Reflejos', 'Rostro centrado'].map(tip => (
-                                        <div key={tip} style={{
-                                            display: 'flex', alignItems: 'center', gap: '5px',
-                                            padding: '4px 12px', background: 'rgba(255,255,255,0.04)',
-                                            borderRadius: '999px', border: '1px solid rgba(255,255,255,0.06)',
-                                        }}>
-                                            <span className="material-symbols-outlined" style={{ color: '#41eec2', fontSize: '13px' }}>check_circle</span>
-                                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '10px', color: '#c9c3d9', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{tip}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </section>
+  infoBox: {
+    maxWidth: "640px",
+    margin: "22px auto 0",
+    padding: "14px 18px",
+    borderRadius: "16px",
+    background: "rgba(15, 23, 42, 0.95)",
+    border: "1px solid rgba(148, 163, 184, 0.2)",
+  },
 
-                        {/* Navigation */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', gap: '16px', flexWrap: 'wrap' }}>
-                            <button
-                                onClick={() => { stopCamera(); navigate('/registro/identidad') }}
-                                style={{
-                                    padding: '14px 32px', border: '1px solid rgba(255,255,255,0.1)',
-                                    borderRadius: '999px', background: 'transparent', color: '#c9c3d9',
-                                    fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '14px',
-                                    cursor: 'pointer', transition: 'background 0.2s', letterSpacing: '0.05em',
-                                }}
-                                onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                                onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                            >
-                                ← Volver
-                            </button>
-                            <button
-                                onClick={() => { stopCamera(); navigate('/registro/huella') }}
-                                disabled={cameraState !== 'captured'}
-                                style={{
-                                    display: 'flex', alignItems: 'center', gap: '8px',
-                                    padding: '14px 48px', background: cameraState === 'captured' ? '#6c47ff' : 'rgba(108,71,255,0.25)',
-                                    borderRadius: '999px', border: 'none', color: cameraState === 'captured' ? '#fff' : 'rgba(255,255,255,0.3)',
-                                    fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '14px',
-                                    cursor: cameraState === 'captured' ? 'pointer' : 'not-allowed',
-                                    letterSpacing: '0.05em',
-                                    boxShadow: cameraState === 'captured' ? '0 8px 24px rgba(108,71,255,0.25)' : 'none',
-                                    transition: 'all 0.3s',
-                                }}
-                                onMouseOver={e => { if (cameraState === 'captured') e.currentTarget.style.opacity = '0.9' }}
-                                onMouseOut={e => { e.currentTarget.style.opacity = '1' }}
-                            >
-                                Continuar
-                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
-                            </button>
-                        </div>
+  infoText: {
+    color: "#cbd5e1",
+    textAlign: "center",
+    margin: 0,
+    fontSize: "15px",
+  },
 
-                        {/* Trust indicator */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px', opacity: 0.4, flexWrap: 'wrap' }}>
-                            {[
-                                { icon: 'encrypted', label: 'Punto a punto' },
-                                { icon: 'cloud_off', label: 'Procesamiento Local' },
-                                { icon: 'policy', label: 'GDPR Compliant' },
-                            ].map(({ icon, label }) => (
-                                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>{icon}</span>
-                                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
-                                </div>
-                            ))}
-                        </div>
+  buttons: {
+    marginTop: "26px",
+    display: "flex",
+    justifyContent: "center",
+    gap: "14px",
+    flexWrap: "wrap",
+  },
 
-                    </div>
-                </main>
+  primaryButton: {
+    border: "none",
+    borderRadius: "16px",
+    padding: "14px 28px",
+    background: "linear-gradient(135deg, #06b6d4, #2563eb)",
+    color: "#fff",
+    fontSize: "16px",
+    fontWeight: "700",
+    boxShadow: "0 12px 28px rgba(37, 99, 235, 0.35)",
+  },
 
-                {/* Footer */}
-                <footer style={{ background: '#14121c', borderTop: '1px solid rgba(255,255,255,0.05)', padding: '32px 40px', marginTop: '48px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1280px', margin: '0 auto', flexWrap: 'wrap', gap: '16px' }}>
-                        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '12px', color: '#c9c3d9', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                            © 2024 NEXA VOTE • Encrypted by AES-256
-                        </span>
-                        <div style={{ display: 'flex', gap: '16px' }}>
-                            {['Privacy Policy', 'Security Protocol', 'Audit Status'].map(link => (
-                                <span key={link} style={{ color: '#c9c3d9', fontSize: '12px', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.05em' }}>{link}</span>
-                            ))}
-                        </div>
-                    </div>
-                </footer>
+  secondaryButton: {
+    border: "1px solid rgba(148, 163, 184, 0.35)",
+    borderRadius: "16px",
+    padding: "14px 28px",
+    background: "rgba(30, 41, 59, 0.9)",
+    color: "#e2e8f0",
+    fontSize: "16px",
+    fontWeight: "700",
+  },
 
-            </div>
-        </>
-    )
-}
+  message: {
+    maxWidth: "640px",
+    margin: "22px auto 0",
+    padding: "16px",
+    borderRadius: "16px",
+    background: "rgba(8, 47, 73, 0.8)",
+    border: "1px solid rgba(34, 211, 238, 0.35)",
+    color: "#e0f2fe",
+    textAlign: "center",
+    fontWeight: "700",
+  },
+
+  continueContainer: {
+    marginTop: "24px",
+    textAlign: "center",
+  },
+
+  continueButton: {
+    border: "none",
+    borderRadius: "16px",
+    padding: "16px 32px",
+    background: "linear-gradient(135deg, #22c55e, #16a34a)",
+    color: "#fff",
+    fontSize: "16px",
+    fontWeight: "800",
+    cursor: "pointer",
+    boxShadow: "0 12px 28px rgba(34, 197, 94, 0.35)",
+  },
+};
+
+export default RegistroReconocimiento;
