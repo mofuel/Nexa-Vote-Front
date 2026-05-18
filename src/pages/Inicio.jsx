@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom'
+import { useEffect } from "react";
+import { testConnection } from "../test/supabaseTest";
 
 const glassCard = {
   background: 'rgba(19, 22, 42, 0.7)',
@@ -6,8 +8,13 @@ const glassCard = {
   border: '1px solid rgba(255, 255, 255, 0.06)',
 }
 
+
 export default function Inicio() {
   const navigate = useNavigate()
+
+  useEffect(() => {
+    testConnection();
+  }, []);
 
   return (
     <div style={{ background: '#14121c', color: '#e6e0ef', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>

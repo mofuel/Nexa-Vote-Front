@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Footer from '../components/layout/footer/Footer'
+import { supabase } from "../../lib/supabaseClient";
+import { useRegistration } from "../../context/useRegistration";
 
 const glassPanel = {
   background: 'rgba(19, 22, 42, 0.8)',
@@ -10,6 +12,7 @@ const glassPanel = {
 
 export default function RegistroIdentidad() {
   const navigate = useNavigate()
+  const { setRegistrationId } = useRegistration();
 
   const [formData, setFormData] = useState({
     dni: '',
@@ -19,34 +22,81 @@ export default function RegistroIdentidad() {
     password: '',
   })
 
-  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value
-    })
-  }
+    }));
+  };
 
-  const handleContinue = () => {
-    setError('')
+  const handleContinue = async () => {
+    if (loading) return;
 
-    const { dni, full_name, birth_date, email, password } = formData
+    setError('');
+    setLoading(true);
 
-    if (!dni || !full_name || !birth_date || !email || !password) {
-      setError('Todos los campos son obligatorios')
-      return
+    const { dni, full_name, birth_date, email, password } = formData;
+
+    try {
+      // 🔍 validaciones
+      if (!dni || !full_name || !birth_date || !email || !password) {
+        setError("Todos los campos son obligatorios");
+        return;
+      }
+
+      if (dni.length !== 8) {
+        setError("El DNI debe tener 8 dígitos");
+        return;
+      }
+
+      // 🧾 SOLO CREAR DRAFT EN BD
+      const { data, error } = await supabase
+        .from("voter_registration")
+        .insert([
+          {
+            dni,
+            full_name,
+            birth_date,
+            email,
+            step: 1,
+            status: "draft",
+
+            // ⚠️ IMPORTANTE: guardas password temporal SOLO si quieres (opcional)
+            // password_hash: password
+          },
+        ])
+        .select()
+        .single();
+
+      console.log("INSERT DATA:", data);
+      console.log("INSERT ERROR:", error);
+
+      if (error) {
+        setError("Error creando registro de votante");
+        return;
+      }
+
+      // 💾 guardar ID del flujo
+      setRegistrationId(data.id);
+
+      // 💾 opcional: guardar password en memoria (context)
+      // lo usarás en step 4
+      // updateData({ password })
+
+      // 🚀 siguiente step
+      navigate("/registro/reconocimiento");
+
+    } catch (err) {
+      console.error("ERROR GENERAL:", err);
+      setError("Error inesperado");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (dni.length !== 8) {
-      setError('El DNI debe tener 8 dígitos')
-      return
-    }
-
-    localStorage.setItem('register_data', JSON.stringify(formData))
-
-    navigate('/registro/reconocimiento')
-  }
 
   return (
     <div style={{
@@ -293,21 +343,18 @@ export default function RegistroIdentidad() {
               </div>
             )}
 
-            <button
-              onClick={handleContinue}
-              style={{
-                background: '#6c47ff',
-                color: '#fff',
-                border: 'none',
-                padding: '16px',
-                borderRadius: '12px',
-                fontWeight: 700,
-                fontSize: '16px',
-                cursor: 'pointer',
-                marginTop: '8px'
-              }}
-            >
-              Continuar Registro
+            <button onClick={handleContinue} style={{
+              background: '#6c47ff',
+              color: '#fff',
+              border: 'none',
+              padding: '16px',
+              borderRadius: '12px',
+              fontWeight: 700,
+              fontSize: '16px',
+              cursor: 'pointer',
+              marginTop: '8px'
+            }} disabled={loading}>
+              {loading ? "Registrando..." : "Continuar"}
             </button>
 
           </div>
