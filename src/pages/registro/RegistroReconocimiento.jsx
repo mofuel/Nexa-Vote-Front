@@ -160,8 +160,6 @@ export default function RegistroReconocimiento() {
     return avg;
   };
 
-  console.log("registrationId:", registrationId);
-
   // ---------------- UPDATE SUPABASE ----------------
   const registerFace = async () => {
     if (!livenessPassed) return setMessage("Falta verificación");

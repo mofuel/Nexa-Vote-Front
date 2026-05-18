@@ -1,79 +1,97 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../../lib/supabaseClient";
+import { useRegistration } from "../../context/useRegistration";
+import { useState } from "react";
 
 const RegistroBiometrico = () => {
   const navigate = useNavigate();
+  const { registrationId } = useRegistration();
 
   const [registrado, setRegistrado] = useState(false);
   const [mensaje, setMensaje] = useState("");
   const [loading, setLoading] = useState(false);
 
   const generarChallenge = () => {
-    const array = new Uint8Array(32);
-    window.crypto.getRandomValues(array);
-    return array;
+    return window.crypto.getRandomValues(new Uint8Array(32));
   };
 
   const registrarBiometrico = async () => {
     try {
-      setMensaje("");
       setLoading(true);
+      setMensaje("");
 
-      if (!window.PublicKeyCredential) {
-        setMensaje("Tu navegador no soporta WebAuthn.");
+      if (!registrationId) {
+        setMensaje("No hay usuario registrado");
         return;
       }
 
       const publicKey = {
         challenge: generarChallenge(),
+
         rp: {
           name: "Nexa Vote",
         },
+
+        // AQUÍ VA TU SUPABASE ID
         user: {
-          id: generarChallenge(),
+          id: new TextEncoder().encode(registrationId),
           name: "votante@nexavote.com",
           displayName: "Votante Nexa Vote",
         },
+
         pubKeyCredParams: [
-          {
-            type: "public-key",
-            alg: -7,
-          },
-          {
-            type: "public-key",
-            alg: -257,
-          },
+          { type: "public-key", alg: -7 },
+          { type: "public-key", alg: -257 },
         ],
+
         authenticatorSelection: {
           authenticatorAttachment: "platform",
           userVerification: "required",
         },
+
         timeout: 60000,
         attestation: "none",
       };
 
-      const credential = await navigator.credentials.create({
-        publicKey,
-      });
+      const credential = await navigator.credentials.create({ publicKey });
 
       if (!credential) {
-        setMensaje("No se pudo registrar la biometría.");
+        setMensaje("No se pudo registrar biometría.");
         return;
       }
 
-      localStorage.setItem("nexa_vote_biometrico", "true");
+      // EXTRAER DATOS IMPORTANTES
+      const credId = btoa(
+        String.fromCharCode(...new Uint8Array(credential.rawId))
+      );
+
+      // GUARDAR EN SUPABASE
+      const { error } = await supabase
+        .from("voter_registration")
+        .update({
+          webauthn_credential_id: credId,
+          webauthn_public_key: "stored_by_browser", // opcional simplificado
+          webauthn_sign_count: 0,
+          step: 3,
+          status: "webauthn_registered",
+        })
+        .eq("id", registrationId);
+
+      if (error) {
+        console.log(error);
+        setMensaje("Error guardando WebAuthn en Supabase");
+        return;
+      }
 
       setRegistrado(true);
-      setMensaje("✅ Huella o biometría registrada correctamente.");
+      setMensaje("Biometría registrada correctamente en Supabase");
     } catch (error) {
-      console.error("Error WebAuthn:", error);
+      console.error(error);
 
       if (error.name === "NotAllowedError") {
-        setMensaje("Operación cancelada o tiempo agotado.");
-      } else if (error.name === "NotSupportedError") {
-        setMensaje("Este dispositivo no soporta autenticación biométrica.");
+        setMensaje("Operación cancelada o tiempo agotado");
       } else {
-        setMensaje("No se pudo registrar la biometría en este dispositivo.");
+        setMensaje("Error en WebAuthn");
       }
     } finally {
       setLoading(false);
@@ -130,8 +148,8 @@ const RegistroBiometrico = () => {
             {loading
               ? "Esperando validación biométrica..."
               : registrado
-              ? "Biometría registrada"
-              : "Registrar Biométrico"}
+                ? "Biometría registrada"
+                : "Registrar Biométrico"}
           </button>
 
           <button
