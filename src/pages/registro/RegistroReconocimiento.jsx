@@ -1,173 +1,245 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import * as faceapi from "face-api.js";
+import { supabase } from "../../lib/supabaseClient";
+import { useRegistration } from "../../context/useRegistration";
 import { useNavigate } from "react-router-dom";
-import Webcam from "react-webcam";
-import axios from "axios";
 
-const API_URL = "http://127.0.0.1:5000/api/reconocimiento/facial";
-
-const RegistroReconocimiento = () => {
-  const webcamRef = useRef(null);
+export default function RegistroReconocimiento() {
+  const videoRef = useRef(null);
   const navigate = useNavigate();
 
-  const [imagen, setImagen] = useState(null);
-  const [mensaje, setMensaje] = useState("");
+  const { registrationId } = useRegistration();
+
+  const [message, setMessage] = useState("Listo para iniciar");
   const [loading, setLoading] = useState(false);
+  const [livenessPassed, setLivenessPassed] = useState(false);
+  const [cameraOn, setCameraOn] = useState(false);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [captureStep, setCaptureStep] = useState(0);
+  const [faceSaved, setFaceSaved] = useState(false);
 
-  const capturarImagen = async () => {
-    try {
-      setMensaje("");
-      setLoading(true);
+  const step = useRef(0);
+  const stableCounter = useRef(0);
+  const runningLiveness = useRef(false);
 
-      const screenshot = webcamRef.current?.getScreenshot();
+  // ---------------- MODELOS ----------------
+  const loadModels = async () => {
+    await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
+    await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
+    await faceapi.nets.faceRecognitionNet.loadFromUri("/models");
+    await faceapi.nets.faceExpressionNet.loadFromUri("/models");
+  };
 
-      if (!screenshot) {
-        setMensaje("No se pudo capturar la imagen. Verifica permisos de cámara.");
+  // ---------------- CAMARA ----------------
+  const startCamera = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+    });
+
+    videoRef.current.srcObject = stream;
+    setCameraOn(true);
+
+    if (!modelsLoaded) {
+      await loadModels();
+      setModelsLoaded(true);
+    }
+
+    setMessage("Cámara activa");
+  };
+
+  // ---------------- LIVENESS ----------------
+  const startLiveness = () => {
+    if (!cameraOn) return setMessage("Inicia la cámara primero");
+
+    runningLiveness.current = true;
+    step.current = 0;
+    stableCounter.current = 0;
+
+    const interval = setInterval(async () => {
+      if (!runningLiveness.current) return;
+
+      const detection = await faceapi
+        .detectSingleFace(
+          videoRef.current,
+          new faceapi.TinyFaceDetectorOptions({
+            inputSize: 224,
+            scoreThreshold: 0.5,
+          })
+        )
+        .withFaceLandmarks()
+        .withFaceExpressions();
+
+      if (!detection) {
+        setMessage("No se detecta rostro");
         return;
       }
 
-      setImagen(screenshot);
+      const nose = detection.landmarks.getNose()[3];
+      const offset = nose.x - videoRef.current.videoWidth / 2;
 
-      const response = await axios.post(
-        API_URL,
-        {
-          imagen: screenshot,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          timeout: 10000,
+      if (step.current === 0) {
+        setMessage("Mira a la izquierda");
+
+        if (offset < -60) stableCounter.current++;
+        else stableCounter.current = 0;
+
+        if (stableCounter.current >= 5) {
+          step.current = 1;
+          stableCounter.current = 0;
+          setMessage("Izquierda confirmada");
         }
-      );
-
-      if (response.data?.success) {
-        setMensaje("✅ Rostro registrado correctamente.");
-      } else {
-        setMensaje(response.data?.message || "❌ No se pudo validar el rostro.");
       }
-    } catch (error) {
-      console.error("Error reconocimiento facial:", error);
 
-      if (error.code === "ECONNABORTED") {
-        setMensaje("El servidor tardó demasiado en responder.");
-      } else if (error.response) {
-        setMensaje(error.response.data?.message || "Error en el servidor.");
-      } else {
-        setMensaje(
-          "No se pudo conectar con el backend. Verifica que python run.py esté activo."
-        );
+      else if (step.current === 1) {
+        setMessage("Mira a la derecha");
+
+        if (offset > 60) stableCounter.current++;
+        else stableCounter.current = 0;
+
+        if (stableCounter.current >= 5) {
+          step.current = 2;
+          stableCounter.current = 0;
+          setMessage("Derecha confirmada");
+        }
       }
-    } finally {
-      setLoading(false);
+
+      else if (step.current === 2) {
+        setMessage("Sonríe");
+
+        if (detection.expressions.happy > 0.75) stableCounter.current++;
+        else stableCounter.current = 0;
+
+        if (stableCounter.current >= 5) {
+          clearInterval(interval);
+          runningLiveness.current = false;
+
+          setLivenessPassed(true);
+          setMessage("Liveness aprobado");
+        }
+      }
+    }, 300);
+  };
+
+  // ---------------- CAPTURA ----------------
+  const captureDescriptor = async () => {
+    setLoading(true);
+
+    const samples = [];
+
+    for (let i = 0; i < 5; i++) {
+      setCaptureStep(i + 1);
+      setMessage(`Capturando rostro (${i + 1}/5)`);
+
+      const detection = await faceapi
+        .detectSingleFace(
+          videoRef.current,
+          new faceapi.TinyFaceDetectorOptions({ inputSize: 224 })
+        )
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+      if (detection) samples.push(detection.descriptor);
+
+      await new Promise((r) => setTimeout(r, 250));
     }
+
+    setCaptureStep(0);
+    setMessage("Procesando rostro...");
+
+    if (samples.length === 0) {
+      setLoading(false);
+      setMessage("Error en captura");
+      return null;
+    }
+
+    const avg = samples[0].map((_, i) =>
+      samples.reduce((s, d) => s + d[i], 0) / samples.length
+    );
+
+    setLoading(false);
+    return avg;
   };
 
-  const repetirCaptura = () => {
-    setImagen(null);
-    setMensaje("");
+  console.log("registrationId:", registrationId);
+
+  // ---------------- UPDATE SUPABASE ----------------
+  const registerFace = async () => {
+    if (!livenessPassed) return setMessage("Falta verificación");
+
+    const descriptor = await captureDescriptor();
+    if (!descriptor) return;
+
+    const { error } = await supabase
+      .from("voter_registration")
+      .update({
+        face_embedding: Array.from(descriptor),
+        step: 2,
+        status: "face_registered",
+      })
+      .eq("id", registrationId);
+
+    if (error) {
+      setMessage("Error guardando en Supabase");
+      console.log(error);
+      return;
+    }
+    setFaceSaved(true);
+    setMessage("Rostro guardado correctamente");
   };
 
-  const continuar = () => {
+  // ---------------- CONTINUAR ----------------
+  const goNext = () => {
     navigate("/registro/biometrico");
   };
+
+  // ---------------- INIT ----------------
+  useEffect(() => {
+    loadModels();
+  }, []);
+
 
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        <div style={styles.header}>
-          <div style={styles.icon}>🧬</div>
+        <h2 style={{ color: "white", textAlign: "center" }}>
+          Registro Biométrico
+        </h2>
 
-          <h1 style={styles.title}>Registro Biométrico Facial</h1>
-
-          <p style={styles.subtitle}>
-            Validación multifactor para el sistema Nexa Vote
-          </p>
-        </div>
-
+        {/* CAMARA REAL */}
         <div style={styles.cameraContainer}>
-          {!imagen ? (
-            <Webcam
-              ref={webcamRef}
-              audio={false}
-              screenshotFormat="image/jpeg"
-              videoConstraints={{
-                width: 640,
-                height: 480,
-                facingMode: "user",
-              }}
-              style={styles.webcam}
-            />
-          ) : (
-            <img src={imagen} alt="Captura facial" style={styles.webcam} />
-          )}
-
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            width={640}
+            height={480}
+            style={styles.webcam}
+          />
           <div style={styles.scanFrame}></div>
         </div>
 
-        <div style={styles.infoBox}>
-          <p style={styles.infoText}>
-            Coloca tu rostro dentro del recuadro y mantén una buena iluminación.
-          </p>
-        </div>
-
+        {/* BOTONES */}
         <div style={styles.buttons}>
-          {!imagen ? (
-            <button
-              onClick={capturarImagen}
-              disabled={loading}
-              style={{
-                ...styles.primaryButton,
-                opacity: loading ? 0.7 : 1,
-                cursor: loading ? "not-allowed" : "pointer",
-              }}
-            >
-              {loading ? "Procesando..." : "Iniciar Reconocimiento"}
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={repetirCaptura}
-                disabled={loading}
-                style={{
-                  ...styles.secondaryButton,
-                  opacity: loading ? 0.7 : 1,
-                  cursor: "pointer",
-                }}
-              >
-                Repetir captura
-              </button>
+          <button onClick={startCamera} style={styles.primaryButton} disabled={cameraOn}>
+            Iniciar cámara
+          </button>
 
-              <button
-                onClick={capturarImagen}
-                disabled={loading}
-                style={{
-                  ...styles.primaryButton,
-                  opacity: loading ? 0.7 : 1,
-                  cursor: "pointer",
-                }}
-              >
-                {loading ? "Procesando..." : "Enviar nuevamente"}
-              </button>
-            </>
+          <button onClick={startLiveness} style={styles.primaryButton} disabled={!cameraOn || livenessPassed}>
+            Verificar vida
+          </button>
+
+          <button onClick={registerFace} style={styles.primaryButton} disabled={!livenessPassed}>
+            Registrar rostro
+          </button>
+          {faceSaved && (
+            <button style={styles.continueButton} onClick={goNext}>
+              Continuar a biometría →
+            </button>
           )}
         </div>
 
-        {mensaje && (
-          <>
-            <div style={styles.message}>{mensaje}</div>
-
-            {mensaje.includes("✅") && (
-              <div style={styles.continueContainer}>
-                <button
-                  onClick={continuar}
-                  style={styles.continueButton}
-                >
-                  Continuar a validación biométrica →
-                </button>
-              </div>
-            )}
-          </>
-        )}
+        {/* MENSAJE */}
+        <p style={styles.message}>{message}</p>
       </div>
     </div>
   );
@@ -242,11 +314,7 @@ const styles = {
     background: "#020617",
   },
 
-  webcam: {
-    width: "100%",
-    height: "auto",
-    display: "block",
-  },
+
 
   scanFrame: {
     position: "absolute",
@@ -332,4 +400,3 @@ const styles = {
   },
 };
 
-export default RegistroReconocimiento;

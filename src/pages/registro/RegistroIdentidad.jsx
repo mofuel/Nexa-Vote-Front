@@ -41,7 +41,6 @@ export default function RegistroIdentidad() {
     const { dni, full_name, birth_date, email, password } = formData;
 
     try {
-      // 🔍 validaciones
       if (!dni || !full_name || !birth_date || !email || !password) {
         setError("Todos los campos son obligatorios");
         return;
@@ -52,7 +51,6 @@ export default function RegistroIdentidad() {
         return;
       }
 
-      // 🧾 SOLO CREAR DRAFT EN BD
       const { data, error } = await supabase
         .from("voter_registration")
         .insert([
@@ -64,7 +62,6 @@ export default function RegistroIdentidad() {
             step: 1,
             status: "draft",
 
-            // ⚠️ IMPORTANTE: guardas password temporal SOLO si quieres (opcional)
             // password_hash: password
           },
         ])
@@ -79,14 +76,11 @@ export default function RegistroIdentidad() {
         return;
       }
 
-      // 💾 guardar ID del flujo
       setRegistrationId(data.id);
 
-      // 💾 opcional: guardar password en memoria (context)
       // lo usarás en step 4
       // updateData({ password })
 
-      // 🚀 siguiente step
       navigate("/registro/reconocimiento");
 
     } catch (err) {
