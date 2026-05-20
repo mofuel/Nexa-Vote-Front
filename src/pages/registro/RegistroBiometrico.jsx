@@ -32,7 +32,6 @@ const RegistroBiometrico = () => {
           name: "Nexa Vote",
         },
 
-        // AQUÍ VA TU SUPABASE ID
         user: {
           id: new TextEncoder().encode(registrationId),
           name: "votante@nexavote.com",
@@ -60,31 +59,49 @@ const RegistroBiometrico = () => {
         return;
       }
 
-      // EXTRAER DATOS IMPORTANTES
+      // ---------------- EXTRAER DATOS ----------------
       const credId = btoa(
         String.fromCharCode(...new Uint8Array(credential.rawId))
       );
 
-      // GUARDAR EN SUPABASE
-      const { error } = await supabase
-        .from("voter_registration")
-        .update({
-          webauthn_credential_id: credId,
-          webauthn_public_key: "stored_by_browser", // opcional simplificado
-          webauthn_sign_count: 0,
-          step: 3,
-          status: "webauthn_registered",
-        })
-        .eq("id", registrationId);
+      // ---------------- GUARDAR WEBAUTHN ----------------
+      const { error: webauthnError } = await supabase
+        .from("webauthn_credentials")
+        .upsert(
+          {
+            voter_id: registrationId,
+            credential_id: credId,
+            public_key: "stored_by_browser",
+            sign_count: 0,
+          },
+          {
+            onConflict: "voter_id",
+          }
+        );
 
-      if (error) {
-        console.log(error);
-        setMensaje("Error guardando WebAuthn en Supabase");
+      if (webauthnError) {
+        console.log(webauthnError);
+        setMensaje("Error guardando WebAuthn");
+        return;
+      }
+
+      // ---------------- ACTUALIZAR STEP ----------------
+      const { error: statusError } = await supabase
+        .from("registration_status")
+        .update({
+          current_step: 3,
+          status: "pending",
+        })
+        .eq("voter_id", registrationId);
+
+      if (statusError) {
+        console.log(statusError);
+        setMensaje("Error actualizando estado");
         return;
       }
 
       setRegistrado(true);
-      setMensaje("Biometría registrada correctamente en Supabase");
+      setMensaje("Biometría registrada correctamente");
     } catch (error) {
       console.error(error);
 

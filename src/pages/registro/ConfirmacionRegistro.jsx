@@ -25,24 +25,51 @@ export default function ConfirmacionRegistro() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const faceOk = !!data?.biometric_data?.face_embedding;
+    const bioOk = !!data?.webauthn_credentials?.credential_id;
+
     // ---------------- FETCH ----------------
     useEffect(() => {
         const fetchData = async () => {
             if (!registrationId) return;
 
-            const { data, error } = await supabase
-                .from("voter_registration")
+            const { data: voter, error: voterError } = await supabase
+                .from("voters")
                 .select("*")
                 .eq("id", registrationId)
                 .single();
 
-            if (error) {
-                console.log(error);
+            if (voterError) {
+                console.log(voterError);
                 setLoading(false);
                 return;
             }
 
-            setData(data);
+            const { data: bio } = await supabase
+                .from("biometric_data")
+                .select("face_embedding")
+                .eq("voter_id", registrationId)
+                .single();
+
+            const { data: webauthn } = await supabase
+                .from("webauthn_credentials")
+                .select("credential_id")
+                .eq("voter_id", registrationId)
+                .single();
+
+            const { data: status } = await supabase
+                .from("registration_status")
+                .select("current_step, status")
+                .eq("voter_id", registrationId)
+                .single();
+
+            setData({
+                ...voter,
+                biometric_data: bio || null,
+                webauthn_credentials: webauthn || null,
+                registration_status: status || null,
+            });
+
             setLoading(false);
         };
 
@@ -51,14 +78,19 @@ export default function ConfirmacionRegistro() {
 
     const finishRegistration = async () => {
         const { error } = await supabase
-            .from("voter_registration")
+            .from("registration_status")
             .update({
-                step: 4,
+                current_step: 4,
                 status: "completed",
+                completed_at: new Date(),
             })
-            .eq("id", registrationId);
+            .eq("voter_id", registrationId);
 
-        if (error) return console.log(error);
+
+        if (error) {
+            console.log(error);
+            return;
+        }
 
         navigate("/registro/exitoso");
     };
@@ -66,9 +98,6 @@ export default function ConfirmacionRegistro() {
     if (loading) {
         return <div style={{ color: "#fff", padding: 40 }}>Cargando...</div>;
     }
-
-    const faceOk = !!data?.face_embedding;
-    const bioOk = !!data?.webauthn_credential_id;
 
     return (
         <div style={{ background: "#14121c", color: "#e6e0ef", minHeight: "100vh", fontFamily: "Inter, sans-serif", display: "flex", flexDirection: "column" }}>
