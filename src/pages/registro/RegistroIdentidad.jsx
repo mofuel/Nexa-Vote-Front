@@ -1,18 +1,22 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import Footer from '../components/layout/footer/Footer'
+import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import Footer from '../components/layout/footer/Footer';
 import { supabase } from "../../lib/supabaseClient";
 import { useRegistration } from "../../context/useRegistration";
+import { useEffect } from "react";
 
 const glassPanel = {
   background: 'rgba(19, 22, 42, 0.8)',
   backdropFilter: 'blur(12px)',
   border: '1px solid rgba(255,255,255,0.06)',
-}
+};
 
 export default function RegistroIdentidad() {
-  const navigate = useNavigate()
-  const { setRegistrationId } = useRegistration();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { registrationId, setRegistrationId } = useRegistration();
+
+  const isEditMode = new URLSearchParams(location.search).get("edit");
 
   const [formData, setFormData] = useState({
     dni: '',
@@ -20,7 +24,7 @@ export default function RegistroIdentidad() {
     birth_date: '',
     email: '',
     password: '',
-  })
+  });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -32,16 +36,40 @@ export default function RegistroIdentidad() {
     }));
   };
 
+  useEffect(() => {
+    if (!isEditMode || !registrationId) return;
+
+    const loadData = async () => {
+      const { data } = await supabase
+        .from("voters")
+        .select("*")
+        .eq("id", registrationId)
+        .single();
+
+      if (data) {
+        setFormData({
+          dni: data.dni,
+          full_name: data.full_name,
+          birth_date: data.birth_date,
+          email: data.email,
+          password: "",
+        });
+      }
+    };
+
+    loadData();
+  }, [registrationId, isEditMode]);
+
   const handleContinue = async () => {
     if (loading) return;
 
     setError('');
     setLoading(true);
 
-    const { dni, full_name, birth_date, email, password } = formData;
+    const { dni, full_name, birth_date, email } = formData;
 
     try {
-      if (!dni || !full_name || !birth_date || !email || !password) {
+      if (!dni || !full_name || !birth_date || !email) {
         setError("Todos los campos son obligatorios");
         return;
       }
@@ -51,7 +79,7 @@ export default function RegistroIdentidad() {
         return;
       }
 
-
+      // ---------------- EDAD ----------------
       const birthDate = new Date(birth_date);
       const today = new Date();
 
@@ -72,6 +100,30 @@ export default function RegistroIdentidad() {
         return;
       }
 
+      if (isEditMode && registrationId) {
+
+        const { error: updateError } = await supabase
+          .from("voters")
+          .update({
+            dni,
+            full_name,
+            birth_date,
+            email,
+          })
+          .eq("id", registrationId);
+
+        if (updateError) {
+          console.log(updateError);
+          setError("Error actualizando información");
+          return;
+        }
+
+        setLoading(false);
+
+        // vuelve a confirmación
+        navigate("/registro/verificacion");
+        return;
+      }
 
       const { data: voterData, error: voterError } = await supabase
         .from("voters")
@@ -91,7 +143,6 @@ export default function RegistroIdentidad() {
         setError("Error creando votante");
         return;
       }
-
 
       const { error: statusError } = await supabase
         .from("registration_status")
@@ -115,11 +166,10 @@ export default function RegistroIdentidad() {
         return;
       }
 
-      // guardar ID global
       setRegistrationId(voterData.id);
 
-      // continuar
       navigate("/registro/reconocimiento");
+
     } catch (err) {
       console.error("ERROR GENERAL:", err);
       setError("Error inesperado");
@@ -127,6 +177,10 @@ export default function RegistroIdentidad() {
       setLoading(false);
     }
   };
+
+
+
+
 
   return (
     <div style={{

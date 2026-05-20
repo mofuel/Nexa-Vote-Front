@@ -120,7 +120,7 @@ export default function RegistroReconocimiento() {
     }, 300);
   };
 
-  // ---------------- CAPTURA ----------------
+  // Captura
   const captureDescriptor = async () => {
     setLoading(true);
 

@@ -4,7 +4,6 @@ import { supabase } from "../../lib/supabaseClient";
 import { useRegistration } from "../../context/useRegistration";
 import Stepper from "../components/ui/Stepper";
 
-// --- ESTILOS (NO TOCADOS) ---
 const glassCard = {
     background: "rgba(19, 22, 42, 0.8)",
     backdropFilter: "blur(12px)",
@@ -25,10 +24,6 @@ export default function ConfirmacionRegistro() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const faceOk = !!data?.biometric_data?.face_embedding;
-    const bioOk = !!data?.webauthn_credentials?.credential_id;
-
-    // ---------------- FETCH ----------------
     useEffect(() => {
         const fetchData = async () => {
             if (!registrationId) return;
@@ -49,13 +44,13 @@ export default function ConfirmacionRegistro() {
                 .from("biometric_data")
                 .select("face_embedding")
                 .eq("voter_id", registrationId)
-                .single();
+                .maybeSingle();
 
             const { data: webauthn } = await supabase
                 .from("webauthn_credentials")
                 .select("credential_id")
                 .eq("voter_id", registrationId)
-                .single();
+                .maybeSingle();
 
             const { data: status } = await supabase
                 .from("registration_status")
@@ -65,9 +60,9 @@ export default function ConfirmacionRegistro() {
 
             setData({
                 ...voter,
-                biometric_data: bio || null,
-                webauthn_credentials: webauthn || null,
-                registration_status: status || null,
+                biometric_data: bio, // ya es objeto o null
+                webauthn_credentials: webauthn,
+                registration_status: status,
             });
 
             setLoading(false);
@@ -75,6 +70,10 @@ export default function ConfirmacionRegistro() {
 
         fetchData();
     }, [registrationId]);
+
+    // ---------------- VALIDACIONES SEGURAS ----------------
+    const faceOk = !!data?.biometric_data?.face_embedding;
+    const bioOk = !!data?.webauthn_credentials?.credential_id;
 
     const finishRegistration = async () => {
         const { error } = await supabase
@@ -85,7 +84,6 @@ export default function ConfirmacionRegistro() {
                 completed_at: new Date(),
             })
             .eq("voter_id", registrationId);
-
 
         if (error) {
             console.log(error);
@@ -102,7 +100,7 @@ export default function ConfirmacionRegistro() {
     return (
         <div style={{ background: "#14121c", color: "#e6e0ef", minHeight: "100vh", fontFamily: "Inter, sans-serif", display: "flex", flexDirection: "column" }}>
 
-            {/* HEADER (NO TOCADO) */}
+            {/* Header*/}
             <header style={{
                 position: "fixed", top: 0, width: "100%", zIndex: 50,
                 background: "rgba(20,18,28,0.8)", backdropFilter: "blur(20px)",
@@ -127,13 +125,13 @@ export default function ConfirmacionRegistro() {
                 </div>
             </header>
 
-            {/* MAIN */}
+            {/* Main */}
             <main style={{ paddingTop: "96px", paddingBottom: "48px", flex: 1 }}>
                 <div style={{ maxWidth: "800px", margin: "0 auto", padding: "0 24px", display: "flex", flexDirection: "column", gap: "32px" }}>
 
                     <Stepper steps={steps} currentStep={4} />
 
-                    {/* TITLE */}
+                    {/* Titulo */}
                     <div style={{ textAlign: "center" }}>
                         <h1 style={{ fontFamily: "Space Grotesk", fontWeight: 700, fontSize: "28px", color: "#fff" }}>
                             Confirmación de Registro
@@ -143,13 +141,12 @@ export default function ConfirmacionRegistro() {
                         </p>
                     </div>
 
-                    {/* CARD */}
+                    {/* Card */}
                     <section style={{ ...glassCard, borderRadius: "16px", padding: "32px", display: "flex", flexDirection: "column", gap: "32px" }}>
 
-                        {/* PERFIL (NO TOCADO) */}
+                        {/* Perfil*/}
                         <div style={{ display: "flex", gap: "24px", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "24px" }}>
 
-                            {/* FOTO FIJA (NO CAMBIAR) */}
                             <div style={{ width: "100px", height: "100px", borderRadius: "12px", overflow: "hidden", border: "2px solid #6c47ff" }}>
                                 <img
                                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuCeWuNUhk99LQRkOfMyu5_kTKiESepjmLTkMpSCHJW1PUvivLvmSeOul1_prLjECurrAWcf1Jz3u9LxAwaETgdI85ba_ZnebxldCFid4RRmASuae6a0_T__17vzvU8EnFNzGFlcUtbXCsARg4NgmwI5hSHlbGPjAuOkvDMpBteJ1Zdby31zdY5m7mQ-5jBpBdEljl1PVHLAHENSJuWemCuTPDEg_-HmYRFmL-Oj52ySq9puR8iHqQEqgvuAyKf7w4RBBxmoXht0psg"
@@ -173,7 +170,6 @@ export default function ConfirmacionRegistro() {
                             </div>
                         </div>
 
-                        {/* GRID CORREGIDO */}
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
 
                             <div style={{ background: "rgba(255,255,255,0.03)", padding: "16px", borderRadius: "12px" }}>
@@ -181,7 +177,6 @@ export default function ConfirmacionRegistro() {
                                 <div>{data?.full_name}</div>
                             </div>
 
-                            {/* 🔥 CAMBIO: EMAIL → DNI */}
                             <div style={{ background: "rgba(255,255,255,0.03)", padding: "16px", borderRadius: "12px" }}>
                                 <span style={{ fontSize: "10px", textTransform: "uppercase" }}>DNI</span>
                                 <div>{data?.dni}</div>
@@ -213,11 +208,11 @@ export default function ConfirmacionRegistro() {
 
                         </div>
 
-                        {/* BOTONES (NO TOCADOS) */}
+                        {/* Buttons */}
                         <div style={{ display: "flex", justifyContent: "space-between" }}>
 
                             <button
-                                onClick={() => navigate(-1)}
+                                onClick={() => navigate("/registro?edit=1")}
                                 style={{
                                     padding: "14px 32px",
                                     borderRadius: "999px",
