@@ -1,0 +1,328 @@
+/* LoginVotante.css */
+
+.lv-page {
+  background: #14121c;
+  color: #e6e0ef;
+  min-height: 100vh;
+  font-family: Inter, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.lv-header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 50;
+  background: rgba(20, 18, 28, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 64px;
+  display: flex;
+  align-items: center;
+}
+
+.lv-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.lv-logo {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: #c9beff;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+}
+
+.lv-nav-icons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.lv-nav-icon {
+  color: #c9beff;
+  cursor: pointer;
+}
+
+/* ── Main ── */
+.lv-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 96px 40px 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.lv-glow-top {
+  position: absolute;
+  top: -10%;
+  right: -5%;
+  width: 500px;
+  height: 500px;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(108, 71, 255, 0.15) 0%, transparent 70%);
+}
+
+.lv-glow-bottom {
+  position: absolute;
+  bottom: -10%;
+  left: -5%;
+  width: 400px;
+  height: 400px;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(65, 238, 194, 0.08) 0%, transparent 70%);
+}
+
+/* ── Card wrapper ── */
+.lv-card-wrapper {
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  z-index: 10;
+}
+
+.lv-card {
+  background: rgba(19, 22, 42, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 48px;
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Card Header ── */
+.lv-card-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.lv-icon-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(108, 71, 255, 0.15);
+  border: 1px solid rgba(201, 190, 255, 0.2);
+  margin-bottom: 16px;
+}
+
+.lv-icon-circle .material-symbols-outlined {
+  color: #c9beff;
+  font-size: 32px;
+}
+
+.lv-card-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  color: #fff;
+  margin: 0 0 8px;
+}
+
+.lv-card-subtitle {
+  color: #c9c3d9;
+  font-size: 14px;
+  line-height: 20px;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+/* ── Form ── */
+.lv-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lv-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lv-label {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 12px;
+  color: #c9c3d9;
+  letter-spacing: 0.1em;
+  font-weight: 500;
+  text-transform: uppercase;
+  padding-left: 4px;
+}
+
+.lv-input-wrap {
+  position: relative;
+}
+
+.lv-input-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #938ea2;
+  font-size: 20px;
+  pointer-events: none;
+}
+
+.lv-input {
+  width: 100%;
+  background: #0e0d17;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 14px 16px 14px 48px;
+  color: #e6e0ef;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.lv-input:focus {
+  border-color: #6c47ff;
+}
+
+/* ── Error ── */
+.lv-error {
+  background: rgba(255, 80, 80, 0.12);
+  border: 1px solid rgba(255, 80, 80, 0.25);
+  color: #ffb4ab;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ── Submit Button ── */
+.lv-btn-submit {
+  margin-top: 8px;
+  background: #6c47ff;
+  color: #fff;
+  border: none;
+  padding: 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 32px rgba(108, 71, 255, 0.3);
+  transition: opacity 0.2s;
+  font-family: inherit;
+  width: 100%;
+}
+
+.lv-btn-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lv-btn-submit .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* ── Security Badges ── */
+.lv-badges-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.lv-security-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lv-security-badge .material-symbols-outlined {
+  color: #41eec2;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.lv-badge-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.lv-badge-label {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 10px;
+  color: #c9c3d9;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.lv-badge-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e6e0ef;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Footer links ── */
+.lv-footer-text {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 13px;
+  color: #c9c3d9;
+}
+
+.lv-footer-text + .lv-footer-text {
+  margin-top: 12px;
+}
+
+.lv-link {
+  color: #c9beff;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ── Footer ── */
+.lv-footer {
+  background: #14121c;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 32px 40px;
+}
+
+.lv-footer-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1280px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.lv-footer-copy {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 12px;
+  color: #c9c3d9;
+  letter-spacing: 0.1em;
+}
