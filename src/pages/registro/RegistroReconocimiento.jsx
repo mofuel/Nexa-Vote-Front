@@ -162,37 +162,76 @@ export default function RegistroReconocimiento() {
 
   // ---------------- UPDATE SUPABASE ----------------
   const registerFace = async () => {
-    if (!livenessPassed) return setMessage("Falta verificación");
+    if (!livenessPassed) {
+      return setMessage("Falta verificación");
+    }
 
     const descriptor = await captureDescriptor();
+
     if (!descriptor) return;
 
-    const { error } = await supabase
-      .from("voter_registration")
-      .update({
-        face_embedding: Array.from(descriptor),
-        step: 2,
-        status: "face_registered",
-      })
-      .eq("id", registrationId);
+    // ---------------- GUARDAR BIOMETRIA ----------------
+    const { error: bioError } = await supabase
+      .from("biometric_data")
+      .upsert(
+        {
+          voter_id: registrationId,
+          face_embedding: JSON.stringify(Array.from(descriptor)),
+        },
+        {
+          onConflict: "voter_id",
+        }
+      );
 
-    if (error) {
-      setMessage("Error guardando en Supabase");
-      console.log(error);
+    if (bioError) {
+      console.log(bioError);
+      setMessage("Error guardando biometría");
       return;
     }
+
+    // ---------------- ACTUALIZAR STEP ----------------
+    const { error: statusError } = await supabase
+      .from("registration_status")
+      .update({
+        current_step: 2,
+        status: "pending",
+      })
+      .eq("voter_id", registrationId);
+
+    if (statusError) {
+      console.log(statusError);
+      setMessage("Error actualizando estado");
+      return;
+    }
+
     setFaceSaved(true);
     setMessage("Rostro guardado correctamente");
   };
 
-  // ---------------- CONTINUAR ----------------
+
   const goNext = () => {
+    stopCamera();
     navigate("/registro/biometrico");
   };
 
-  // ---------------- INIT ----------------
+  const stopCamera = () => {
+    const stream = videoRef.current?.srcObject;
+
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+
+    setCameraOn(false);
+  };
+
+
   useEffect(() => {
     loadModels();
+
+    return () => {
+      stopCamera();
+    };
   }, []);
 
 
