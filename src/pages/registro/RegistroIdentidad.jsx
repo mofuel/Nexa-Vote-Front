@@ -51,38 +51,75 @@ export default function RegistroIdentidad() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("voter_registration")
+
+      const birthDate = new Date(birth_date);
+      const today = new Date();
+
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+
+      if (age < 18) {
+        setError("Debes ser mayor de 18 años");
+        return;
+      }
+
+      if (age > 100) {
+        setError("Edad inválida");
+        return;
+      }
+
+
+      const { data: voterData, error: voterError } = await supabase
+        .from("voters")
         .insert([
           {
             dni,
             full_name,
             birth_date,
             email,
-            step: 1,
-            status: "draft",
-
-            // password_hash: password
           },
         ])
         .select()
         .single();
 
-      console.log("INSERT DATA:", data);
-      console.log("INSERT ERROR:", error);
-
-      if (error) {
-        setError("Error creando registro de votante");
+      if (voterError) {
+        console.log(voterError);
+        setError("Error creando votante");
         return;
       }
 
-      setRegistrationId(data.id);
 
-      // lo usarás en step 4
-      // updateData({ password })
+      const { error: statusError } = await supabase
+        .from("registration_status")
+        .insert([
+          {
+            voter_id: voterData.id,
+            current_step: 1,
+            status: "pending",
+          },
+        ]);
 
+      if (statusError) {
+        console.log(statusError);
+
+        await supabase
+          .from("voters")
+          .delete()
+          .eq("id", voterData.id);
+
+        setError("Error creando estado de registro");
+        return;
+      }
+
+      // guardar ID global
+      setRegistrationId(voterData.id);
+
+      // continuar
       navigate("/registro/reconocimiento");
-
     } catch (err) {
       console.error("ERROR GENERAL:", err);
       setError("Error inesperado");
@@ -90,7 +127,6 @@ export default function RegistroIdentidad() {
       setLoading(false);
     }
   };
-
 
   return (
     <div style={{
