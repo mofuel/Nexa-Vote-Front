@@ -1,0 +1,153 @@
+/* RegistroIdentidad.css */
+
+.ri-page {
+  background: #14121c;
+  color: #e6e0ef;
+  min-height: 100vh;
+  font-family: Inter, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.ri-header {
+  background: rgba(20, 18, 28, 0.8);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.ri-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 40px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.ri-logo {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: #e6e0ef;
+}
+
+.ri-nav-icons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ri-nav-icon {
+  color: #c9beff;
+}
+
+/* ── Main ── */
+.ri-main {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+}
+
+/* ── Glass Panel ── */
+.ri-glass-panel {
+  background: rgba(19, 22, 42, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  width: 100%;
+  max-width: 680px;
+  border-radius: 16px;
+  padding: 40px;
+}
+
+/* ── Panel Header ── */
+.ri-panel-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.ri-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 32px;
+  margin-bottom: 8px;
+  margin-top: 0;
+}
+
+.ri-subtitle {
+  color: #c9c3d9;
+  font-size: 16px;
+  margin: 0;
+}
+
+/* ── Form Grid ── */
+.ri-form-grid {
+  display: grid;
+  gap: 20px;
+}
+
+/* ── Field ── */
+.ri-field label {
+  display: block;
+  margin-bottom: 8px;
+  color: #c9c3d9;
+  font-size: 14px;
+}
+
+.ri-input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0a0c14;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.ri-input:focus {
+  border-color: rgba(108, 71, 255, 0.6);
+}
+
+/* ── Error ── */
+.ri-error {
+  background: rgba(255, 80, 80, 0.1);
+  border: 1px solid rgba(255, 80, 80, 0.2);
+  padding: 12px;
+  border-radius: 8px;
+  color: #ffb4ab;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* ── Submit Button ── */
+.ri-btn-submit {
+  background: #6c47ff;
+  color: #fff;
+  border: none;
+  padding: 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 8px;
+  width: 100%;
+  font-family: inherit;
+  transition: opacity 0.2s;
+}
+
+.ri-btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ri-btn-submit:not(:disabled):hover {
+  opacity: 0.9;
+}

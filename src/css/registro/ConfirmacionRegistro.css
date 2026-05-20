@@ -1,0 +1,244 @@
+/* ConfirmacionRegistro.css */
+
+.cr-page {
+  background: #14121c;
+  color: #e6e0ef;
+  min-height: 100vh;
+  font-family: Inter, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.cr-loading {
+  color: #fff;
+  padding: 40px;
+}
+
+/* ── Header ── */
+.cr-header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 50;
+  background: rgba(20, 18, 28, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 64px;
+  display: flex;
+  align-items: center;
+}
+
+.cr-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.cr-logo {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: #c9beff;
+  cursor: pointer;
+}
+
+.cr-nav-icons {
+  display: flex;
+  gap: 8px;
+}
+
+.cr-nav-icon {
+  color: #41eec2;
+}
+
+/* ── Main ── */
+.cr-main {
+  padding-top: 96px;
+  padding-bottom: 48px;
+  flex: 1;
+}
+
+.cr-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ── Page Title ── */
+.cr-page-title {
+  text-align: center;
+}
+
+.cr-page-title h1 {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  color: #fff;
+  margin: 0 0 8px;
+}
+
+.cr-page-title p {
+  color: #c9c3d9;
+  font-size: 16px;
+  margin: 0;
+}
+
+/* ── Glass Card ── */
+.cr-card {
+  background: rgba(19, 22, 42, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ── Profile Row ── */
+.cr-profile {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 24px;
+}
+
+.cr-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #6c47ff;
+  flex-shrink: 0;
+}
+
+.cr-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(100%) brightness(0.8);
+}
+
+.cr-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cr-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(65, 238, 194, 0.1);
+  padding: 4px 12px;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.cr-verified-badge .material-symbols-outlined {
+  color: #41eec2;
+  font-size: 18px;
+}
+
+.cr-verified-badge span:last-child {
+  font-size: 10px;
+  color: #41eec2;
+  font-weight: 700;
+}
+
+.cr-profile-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #c9beff;
+  margin: 6px 0 0;
+}
+
+.cr-profile-email {
+  font-size: 14px;
+  color: #c9c3d9;
+  margin: 0;
+}
+
+/* ── Data Grid ── */
+.cr-data-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.cr-data-item {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.cr-data-label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #c9c3d9;
+  margin-bottom: 6px;
+}
+
+.cr-data-value {
+  color: #e6e0ef;
+}
+
+.cr-data-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cr-check-icon {
+  color: #41eec2;
+}
+
+/* ── Buttons ── */
+.cr-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.cr-btn-edit {
+  padding: 14px 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: #c9c3d9;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.cr-btn-edit:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.cr-btn-finish {
+  padding: 14px 48px;
+  border-radius: 999px;
+  border: none;
+  background: #6c47ff;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.cr-btn-finish:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

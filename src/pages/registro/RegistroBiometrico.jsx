@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { useRegistration } from "../../context/useRegistration";
 import { useState } from "react";
+import "../../css/registro/RegistroBiometrico.css";
 
 const RegistroBiometrico = () => {
   const navigate = useNavigate();
@@ -11,314 +12,110 @@ const RegistroBiometrico = () => {
   const [mensaje, setMensaje] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const generarChallenge = () => {
-    return window.crypto.getRandomValues(new Uint8Array(32));
-  };
+  const generarChallenge = () => window.crypto.getRandomValues(new Uint8Array(32));
 
   const registrarBiometrico = async () => {
     try {
       setLoading(true);
       setMensaje("");
 
-      if (!registrationId) {
-        setMensaje("No hay usuario registrado");
-        return;
-      }
+      if (!registrationId) { setMensaje("No hay usuario registrado"); return; }
 
       const publicKey = {
         challenge: generarChallenge(),
-
-        rp: {
-          name: "Nexa Vote",
-        },
-
+        rp: { name: "Nexa Vote" },
         user: {
           id: new TextEncoder().encode(registrationId),
           name: "votante@nexavote.com",
           displayName: "Votante Nexa Vote",
         },
-
         pubKeyCredParams: [
           { type: "public-key", alg: -7 },
           { type: "public-key", alg: -257 },
         ],
-
-        authenticatorSelection: {
-          authenticatorAttachment: "platform",
-          userVerification: "required",
-        },
-
+        authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
         timeout: 60000,
         attestation: "none",
       };
 
       const credential = await navigator.credentials.create({ publicKey });
+      if (!credential) { setMensaje("No se pudo registrar biometría."); return; }
 
-      if (!credential) {
-        setMensaje("No se pudo registrar biometría.");
-        return;
-      }
+      const credId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
 
-      // ---------------- EXTRAER DATOS ----------------
-      const credId = btoa(
-        String.fromCharCode(...new Uint8Array(credential.rawId))
-      );
-
-      // ---------------- GUARDAR WEBAUTHN ----------------
       const { error: webauthnError } = await supabase
         .from("webauthn_credentials")
-        .upsert(
-          {
-            voter_id: registrationId,
-            credential_id: credId,
-            public_key: "stored_by_browser",
-            sign_count: 0,
-          },
-          {
-            onConflict: "voter_id",
-          }
-        );
+        .upsert({ voter_id: registrationId, credential_id: credId, public_key: "stored_by_browser", sign_count: 0 }, { onConflict: "voter_id" });
 
-      if (webauthnError) {
-        console.log(webauthnError);
-        setMensaje("Error guardando WebAuthn");
-        return;
-      }
+      if (webauthnError) { console.log(webauthnError); setMensaje("Error guardando WebAuthn"); return; }
 
-      // ---------------- ACTUALIZAR STEP ----------------
       const { error: statusError } = await supabase
         .from("registration_status")
-        .update({
-          current_step: 3,
-          status: "pending",
-        })
+        .update({ current_step: 3, status: "pending" })
         .eq("voter_id", registrationId);
 
-      if (statusError) {
-        console.log(statusError);
-        setMensaje("Error actualizando estado");
-        return;
-      }
+      if (statusError) { console.log(statusError); setMensaje("Error actualizando estado"); return; }
 
       setRegistrado(true);
       setMensaje("Biometría registrada correctamente");
     } catch (error) {
       console.error(error);
-
-      if (error.name === "NotAllowedError") {
-        setMensaje("Operación cancelada o tiempo agotado");
-      } else {
-        setMensaje("Error en WebAuthn");
-      }
+      setMensaje(error.name === "NotAllowedError" ? "Operación cancelada o tiempo agotado" : "Error en WebAuthn");
     } finally {
       setLoading(false);
     }
   };
 
-  const continuar = () => {
-    navigate("/registro/verificacion");
-  };
-
   return (
-    <div style={styles.page}>
-      <header style={styles.navbar}>
-        <h2 style={styles.logo}>NEXA VOTE</h2>
-
-        <div style={styles.navIcons}>
+    <div className="rb-page">
+      <header className="rb-navbar">
+        <h2 className="rb-logo">NEXA VOTE</h2>
+        <div className="rb-nav-icons">
           <span>🔒</span>
           <span>🛡️</span>
         </div>
       </header>
 
-      <main style={styles.container}>
-        <section style={styles.card}>
-          <h1 style={styles.title}>Biometría - WebAuthn</h1>
+      <main className="rb-container">
+        <section className="rb-card">
+          <h1 className="rb-title">Biometría - WebAuthn</h1>
+          <p className="rb-subtitle">Vincule su huella o llave de seguridad para continuar</p>
 
-          <p style={styles.subtitle}>
-            Vincule su huella o llave de seguridad para continuar
-          </p>
-
-          <div style={styles.fingerprintCircle}>
-            <span style={styles.fingerprint}>🌀</span>
+          <div className="rb-fingerprint-circle">
+            <span className="rb-fingerprint-icon">🌀</span>
           </div>
 
-          <div style={styles.badges}>
-            <span style={styles.badge}>FIDO2 COMPATIBLE</span>
-            <span style={styles.badge}>U2F COMPATIBLE</span>
-            <span style={styles.badge}>AES-256 COMPATIBLE</span>
+          <div className="rb-badges">
+            <span className="rb-badge">FIDO2 COMPATIBLE</span>
+            <span className="rb-badge">U2F COMPATIBLE</span>
+            <span className="rb-badge">AES-256 COMPATIBLE</span>
           </div>
 
-          <div style={styles.infoBox}>
-            WebAuthn utiliza criptografía de clave pública. Sus datos biométricos
-            nunca salen del dispositivo.
+          <div className="rb-info-box">
+            WebAuthn utiliza criptografía de clave pública. Sus datos biométricos nunca salen del dispositivo.
           </div>
 
           <button
             onClick={registrarBiometrico}
             disabled={loading || registrado}
-            style={{
-              ...styles.primaryButton,
-              opacity: loading || registrado ? 0.7 : 1,
-              cursor: loading || registrado ? "not-allowed" : "pointer",
-            }}
+            className="rb-btn-primary"
           >
-            {loading
-              ? "Esperando validación biométrica..."
-              : registrado
-                ? "Biometría registrada"
-                : "Registrar Biométrico"}
+            {loading ? "Esperando validación biométrica..." : registrado ? "Biometría registrada" : "Registrar Biométrico"}
           </button>
 
           <button
-            onClick={continuar}
+            onClick={() => navigate("/registro/verificacion")}
             disabled={!registrado}
-            style={{
-              ...styles.secondaryButton,
-              opacity: registrado ? 1 : 0.5,
-              cursor: registrado ? "pointer" : "not-allowed",
-            }}
+            className="rb-btn-secondary"
           >
             Siguiente →
           </button>
 
-          {mensaje && <div style={styles.message}>{mensaje}</div>}
+          {mensaje && <div className="rb-message">{mensaje}</div>}
         </section>
       </main>
     </div>
   );
-};
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "#11101a",
-    color: "#f8fafc",
-    fontFamily: "Inter, system-ui, Arial, sans-serif",
-  },
-
-  navbar: {
-    height: "90px",
-    padding: "0 90px",
-    borderBottom: "1px solid rgba(148, 163, 184, 0.18)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  logo: {
-    color: "#c4b5fd",
-    letterSpacing: "6px",
-    fontSize: "22px",
-  },
-
-  navIcons: {
-    display: "flex",
-    gap: "18px",
-    color: "#2dd4bf",
-    fontSize: "22px",
-  },
-
-  container: {
-    minHeight: "calc(100vh - 90px)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: "30px",
-  },
-
-  card: {
-    width: "100%",
-    maxWidth: "760px",
-    background: "#151726",
-    border: "1px solid rgba(148, 163, 184, 0.16)",
-    borderRadius: "24px",
-    padding: "42px",
-    textAlign: "center",
-    boxShadow: "0 24px 70px rgba(0,0,0,0.35)",
-  },
-
-  title: {
-    fontSize: "32px",
-    margin: 0,
-    fontWeight: "800",
-  },
-
-  subtitle: {
-    color: "#cbd5e1",
-    marginTop: "12px",
-  },
-
-  fingerprintCircle: {
-    width: "190px",
-    height: "190px",
-    borderRadius: "50%",
-    border: "2px dashed #4f46e5",
-    margin: "50px auto",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "rgba(79, 70, 229, 0.08)",
-  },
-
-  fingerprint: {
-    fontSize: "64px",
-  },
-
-  badges: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "14px",
-    flexWrap: "wrap",
-    marginBottom: "26px",
-  },
-
-  badge: {
-    border: "1px solid rgba(148, 163, 184, 0.25)",
-    borderRadius: "999px",
-    padding: "8px 16px",
-    fontSize: "13px",
-    color: "#cbd5e1",
-  },
-
-  infoBox: {
-    background: "rgba(88, 28, 135, 0.28)",
-    borderLeft: "4px solid #7c3aed",
-    padding: "16px",
-    textAlign: "left",
-    color: "#ddd6fe",
-    marginBottom: "28px",
-  },
-
-  primaryButton: {
-    width: "100%",
-    border: "none",
-    borderRadius: "14px",
-    padding: "16px",
-    background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
-    color: "#fff",
-    fontWeight: "800",
-    marginBottom: "18px",
-  },
-
-  secondaryButton: {
-    width: "100%",
-    border: "1px solid rgba(148, 163, 184, 0.25)",
-    borderRadius: "14px",
-    padding: "16px",
-    background: "#232436",
-    color: "#f8fafc",
-    fontWeight: "700",
-  },
-
-  message: {
-    marginTop: "22px",
-    padding: "16px",
-    borderRadius: "14px",
-    background: "rgba(15, 23, 42, 0.9)",
-    border: "1px solid rgba(148, 163, 184, 0.2)",
-    color: "#e0f2fe",
-    fontWeight: "700",
-  },
 };
 
 export default RegistroBiometrico;

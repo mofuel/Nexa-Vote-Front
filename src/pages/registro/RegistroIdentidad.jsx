@@ -1,15 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Footer from '../components/layout/footer/Footer';
-import { supabase } from "../../lib/supabaseClient";
+import API_URL from "../../config/api";
 import { useRegistration } from "../../context/useRegistration";
-import { useEffect } from "react";
-
-const glassPanel = {
-  background: 'rgba(19, 22, 42, 0.8)',
-  backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255,255,255,0.06)',
-};
+import { toast } from "sonner";
+import "../../css/registro/Registroidentidad.css";
 
 export default function RegistroIdentidad() {
   const navigate = useNavigate();
@@ -30,30 +25,28 @@ export default function RegistroIdentidad() {
   const [error, setError] = useState('');
 
   const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   useEffect(() => {
     if (!isEditMode || !registrationId) return;
 
     const loadData = async () => {
-      const { data } = await supabase
-        .from("voters")
-        .select("*")
-        .eq("id", registrationId)
-        .single();
+      try {
+        const response = await fetch(`${API_URL}/register/voter/${registrationId}`);
+        const result = await response.json();
 
-      if (data) {
-        setFormData({
-          dni: data.dni,
-          full_name: data.full_name,
-          birth_date: data.birth_date,
-          email: data.email,
-          password: "",
-        });
+        if (result.success) {
+          setFormData({
+            dni: result.data.dni,
+            full_name: result.data.full_name,
+            birth_date: result.data.birth_date,
+            email: result.data.email,
+            password: "",
+          });
+        }
+      } catch (err) {
+        console.log(err);
       }
     };
 
@@ -62,382 +55,137 @@ export default function RegistroIdentidad() {
 
   const handleContinue = async () => {
     if (loading) return;
-
-    setError('');
     setLoading(true);
 
     const { dni, full_name, birth_date, email } = formData;
 
     try {
-      if (!dni || !full_name || !birth_date || !email) {
-        setError("Todos los campos son obligatorios");
-        return;
-      }
-
-      if (dni.length !== 8) {
-        setError("El DNI debe tener 8 dígitos");
-        return;
-      }
-
-      // ---------------- EDAD ----------------
-      const birthDate = new Date(birth_date);
-      const today = new Date();
-
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-
-      if (age < 18) {
-        setError("Debes ser mayor de 18 años");
-        return;
-      }
-
-      if (age > 100) {
-        setError("Edad inválida");
-        return;
-      }
-
-      if (isEditMode && registrationId) {
-
-        const { error: updateError } = await supabase
-          .from("voters")
-          .update({
-            dni,
-            full_name,
-            birth_date,
-            email,
-          })
-          .eq("id", registrationId);
-
-        if (updateError) {
-          console.log(updateError);
-          setError("Error actualizando información");
-          return;
+      const response = await fetch(
+        isEditMode && registrationId
+          ? `${API_URL}/register/identity/${registrationId}`
+          : `${API_URL}/register/identity`,
+        {
+          method: isEditMode && registrationId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dni, full_name, birth_date, email }),
         }
+      );
 
-        setLoading(false);
+      const result = await response.json();
 
-        // vuelve a confirmación
+      if (!response.ok || !result.success) {
+        toast.error(result.error || "Error en la operación");
+        return;
+      }
+
+      if (isEditMode) {
+        toast.success(result.message || "Actualizado correctamente");
         navigate("/registro/verificacion");
         return;
       }
 
-      const { data: voterData, error: voterError } = await supabase
-        .from("voters")
-        .insert([
-          {
-            dni,
-            full_name,
-            birth_date,
-            email,
-          },
-        ])
-        .select()
-        .single();
-
-      if (voterError) {
-        console.log(voterError);
-        setError("Error creando votante");
-        return;
-      }
-
-      const { error: statusError } = await supabase
-        .from("registration_status")
-        .insert([
-          {
-            voter_id: voterData.id,
-            current_step: 1,
-            status: "pending",
-          },
-        ]);
-
-      if (statusError) {
-        console.log(statusError);
-
-        await supabase
-          .from("voters")
-          .delete()
-          .eq("id", voterData.id);
-
-        setError("Error creando estado de registro");
-        return;
-      }
-
-      setRegistrationId(voterData.id);
-
+      setRegistrationId(result.data.voter_id);
+      toast.success(result.message || "Registro creado");
       navigate("/registro/reconocimiento");
 
     } catch (err) {
-      console.error("ERROR GENERAL:", err);
-      setError("Error inesperado");
+      console.error(err);
+      toast.error("Error de conexión con el servidor");
     } finally {
       setLoading(false);
     }
   };
 
-
-
-
-
   return (
-    <div style={{
-      background: '#14121c',
-      color: '#e6e0ef',
-      minHeight: '100vh',
-      fontFamily: 'Inter, sans-serif',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+    <div className="ri-page">
 
-      <header style={{
-        background: 'rgba(20,18,28,0.8)',
-        backdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(255,255,255,0.05)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-      }}>
-        <nav style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '12px 40px',
-          maxWidth: '1280px',
-          margin: '0 auto'
-        }}>
-          <span style={{
-            fontFamily: 'Space Grotesk, sans-serif',
-            fontWeight: 700,
-            fontSize: '20px',
-            color: '#e6e0ef'
-          }}>
-            NEXA VOTE
-          </span>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <span className="material-symbols-outlined" style={{ color: '#c9beff' }}>
-              verified_user
-            </span>
+      <header className="ri-header">
+        <nav className="ri-nav">
+          <span className="ri-logo">NEXA VOTE</span>
+          <div className="ri-nav-icons">
+            <span className="material-symbols-outlined ri-nav-icon">verified_user</span>
           </div>
         </nav>
       </header>
 
-      <main style={{
-        flexGrow: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '48px 16px'
-      }}>
+      <main className="ri-main">
+        <div className="ri-glass-panel">
 
-        <div style={{
-          ...glassPanel,
-          width: '100%',
-          maxWidth: '680px',
-          borderRadius: '16px',
-          padding: '40px'
-        }}>
-
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <h1 style={{
-              fontFamily: 'Space Grotesk, sans-serif',
-              fontWeight: 700,
-              fontSize: '32px',
-              marginBottom: '8px'
-            }}>
-              Registro de Votante
-            </h1>
-
-            <p style={{
-              color: '#c9c3d9',
-              fontSize: '16px'
-            }}>
+          <div className="ri-panel-header">
+            <h1 className="ri-title">Registro de Votante</h1>
+            <p className="ri-subtitle">
               Ingrese sus datos personales para crear su cuenta electoral.
             </p>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gap: '20px'
-          }}>
+          <div className="ri-form-grid">
 
-            <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: '#c9c3d9',
-                fontSize: '14px'
-              }}>
-                DNI
-              </label>
-
+            <div className="ri-field">
+              <label>DNI</label>
               <input
                 type="text"
                 name="dni"
                 value={formData.dni}
                 onChange={handleChange}
                 placeholder="12345678"
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  background: '#0A0C14',
-                  color: '#fff',
-                  fontSize: '14px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
+                className="ri-input"
               />
             </div>
 
-            <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: '#c9c3d9',
-                fontSize: '14px'
-              }}>
-                Nombre Completo
-              </label>
-
+            <div className="ri-field">
+              <label>Nombre Completo</label>
               <input
                 type="text"
                 name="full_name"
                 value={formData.full_name}
                 onChange={handleChange}
                 placeholder="Juan Pérez"
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  background: '#0A0C14',
-                  color: '#fff',
-                  fontSize: '14px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
+                className="ri-input"
               />
             </div>
 
-            <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: '#c9c3d9',
-                fontSize: '14px'
-              }}>
-                Fecha de Nacimiento
-              </label>
-
+            <div className="ri-field">
+              <label>Fecha de Nacimiento</label>
               <input
                 type="date"
                 name="birth_date"
                 value={formData.birth_date}
                 onChange={handleChange}
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  background: '#0A0C14',
-                  color: '#fff',
-                  fontSize: '14px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
+                className="ri-input"
               />
             </div>
 
-            <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: '#c9c3d9',
-                fontSize: '14px'
-              }}>
-                Correo Electrónico
-              </label>
-
+            <div className="ri-field">
+              <label>Correo Electrónico</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="correo@nexavote.test"
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  background: '#0A0C14',
-                  color: '#fff',
-                  fontSize: '14px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
+                className="ri-input"
               />
             </div>
 
-            <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: '#c9c3d9',
-                fontSize: '14px'
-              }}>
-                Contraseña
-              </label>
-
+            <div className="ri-field">
+              <label>Contraseña</label>
               <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="********"
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  background: '#0A0C14',
-                  color: '#fff',
-                  fontSize: '14px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
+                className="ri-input"
               />
             </div>
 
-            {error && (
-              <div style={{
-                background: 'rgba(255,80,80,0.1)',
-                border: '1px solid rgba(255,80,80,0.2)',
-                padding: '12px',
-                borderRadius: '8px',
-                color: '#ffb4ab',
-                textAlign: 'center',
-                fontSize: '14px'
-              }}>
-                {error}
-              </div>
-            )}
+            {error && <div className="ri-error">{error}</div>}
 
-            <button onClick={handleContinue} style={{
-              background: '#6c47ff',
-              color: '#fff',
-              border: 'none',
-              padding: '16px',
-              borderRadius: '12px',
-              fontWeight: 700,
-              fontSize: '16px',
-              cursor: 'pointer',
-              marginTop: '8px'
-            }} disabled={loading}>
+            <button
+              onClick={handleContinue}
+              className="ri-btn-submit"
+              disabled={loading}
+            >
               {loading ? "Registrando..." : "Continuar"}
             </button>
 
@@ -447,5 +195,5 @@ export default function RegistroIdentidad() {
 
       <Footer />
     </div>
-  )
+  );
 }

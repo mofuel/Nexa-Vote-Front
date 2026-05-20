@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "sonner";
 
 import Inicio from "./pages/Inicio";
 import LoginVotante from "./pages/votante/LoginVotante";
@@ -19,6 +20,7 @@ import RegistroLayout from "./pages/registro/RegistroLayout";
 function App() {
   return (
     <BrowserRouter>
+      <Toaster richColors position="top-right" />
       <Routes>
         {/* PUBLICO */}
         <Route path="/" element={<Inicio />} />
