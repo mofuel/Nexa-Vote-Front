@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../../lib/supabaseClient";
 import { useRegistration } from "../../context/useRegistration";
 import { useState } from "react";
 import "../../css/registro/RegistroBiometrico.css";
+import API_URL from "../../config/api";
 
 const RegistroBiometrico = () => {
   const navigate = useNavigate();
@@ -12,55 +12,114 @@ const RegistroBiometrico = () => {
   const [mensaje, setMensaje] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const generarChallenge = () => window.crypto.getRandomValues(new Uint8Array(32));
-
   const registrarBiometrico = async () => {
     try {
       setLoading(true);
       setMensaje("");
 
-      if (!registrationId) { setMensaje("No hay usuario registrado"); return; }
+      if (!registrationId) {
+        setMensaje("No hay usuario registrado");
+        return;
+      }
 
-      const publicKey = {
-        challenge: generarChallenge(),
-        rp: { name: "Nexa Vote" },
-        user: {
-          id: new TextEncoder().encode(registrationId),
-          name: "votante@nexavote.com",
-          displayName: "Votante Nexa Vote",
+      // =========================
+      // 1. pedir OPTIONS al backend
+      // =========================
+      const optionsRes = await fetch(`${API_URL}/webauthn/register/options`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voter_id: registrationId })
+      });
+
+      const options = await optionsRes.json();
+
+      if (!options.success) {
+        setMensaje(options.error || "Error obteniendo challenge");
+        return;
+      }
+
+      // decode challenge
+      const challenge = Uint8Array.from(
+        atob(options.challenge),
+        c => c.charCodeAt(0)
+      );
+
+      // =========================
+      // 2. crear credencial
+      // =========================
+      const credential = await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: { name: "Nexa Vote" },
+          user: {
+            id: new TextEncoder().encode(registrationId),
+            name: "voter",
+            displayName: "Votante Nexa Vote",
+          },
+          pubKeyCredParams: [
+            { type: "public-key", alg: -7 },
+            { type: "public-key", alg: -257 },
+          ],
+          authenticatorSelection: {
+            authenticatorAttachment: "platform",
+            userVerification: "required"
+          },
+          timeout: 60000,
+          attestation: "none",
         },
-        pubKeyCredParams: [
-          { type: "public-key", alg: -7 },
-          { type: "public-key", alg: -257 },
-        ],
-        authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
-        timeout: 60000,
-        attestation: "none",
+      });
+
+      if (!credential) {
+        setMensaje("No se pudo registrar biometría.");
+        return;
+      }
+
+      // =========================
+      // 3. enviar al backend
+      // =========================
+      const payload = {
+        id: credential.id,
+        rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+        type: credential.type,
+        response: {
+          clientDataJSON: btoa(
+            String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))
+          ),
+          attestationObject: btoa(
+            String.fromCharCode(...new Uint8Array(credential.response.attestationObject))
+          ),
+        },
+        voter_id: registrationId
       };
 
-      const credential = await navigator.credentials.create({ publicKey });
-      if (!credential) { setMensaje("No se pudo registrar biometría."); return; }
+      const verifyRes = await fetch(`${API_URL}/webauthn/register/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-      const credId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+      const result = await verifyRes.json();
 
-      const { error: webauthnError } = await supabase
-        .from("webauthn_credentials")
-        .upsert({ voter_id: registrationId, credential_id: credId, public_key: "stored_by_browser", sign_count: 0 }, { onConflict: "voter_id" });
+      if (!verifyRes.ok || !result.success) {
+        setMensaje(result.error || "Error verificando WebAuthn");
+        return;
+      }
 
-      if (webauthnError) { console.log(webauthnError); setMensaje("Error guardando WebAuthn"); return; }
-
-      const { error: statusError } = await supabase
-        .from("registration_status")
-        .update({ current_step: 3, status: "pending" })
-        .eq("voter_id", registrationId);
-
-      if (statusError) { console.log(statusError); setMensaje("Error actualizando estado"); return; }
-
+      // =========================
+      // 4. actualizar estado (AHORA backend idealmente lo hace)
+      // =========================
       setRegistrado(true);
       setMensaje("Biometría registrada correctamente");
+
+      navigate("/registro/biometrico");
+
     } catch (error) {
       console.error(error);
-      setMensaje(error.name === "NotAllowedError" ? "Operación cancelada o tiempo agotado" : "Error en WebAuthn");
+      setMensaje(
+        error.name === "NotAllowedError"
+          ? "Operación cancelada o tiempo agotado"
+          : "Error en WebAuthn"
+      );
     } finally {
       setLoading(false);
     }

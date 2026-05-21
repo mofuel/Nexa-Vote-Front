@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect } from "react";
 import * as faceapi from "face-api.js";
-import { supabase } from "../../lib/supabaseClient";
 import { useRegistration } from "../../context/useRegistration";
 import { useNavigate } from "react-router-dom";
 import "../../css/registro/RegistroReconocimiento.css";
+import API_URL from "../../config/api";
 
 export default function RegistroReconocimiento() {
   const videoRef = useRef(null);
@@ -119,21 +119,32 @@ export default function RegistroReconocimiento() {
     const descriptor = await captureDescriptor();
     if (!descriptor) return;
 
-    const { error: bioError } = await supabase
-      .from("biometric_data")
-      .upsert({ voter_id: registrationId, face_embedding: JSON.stringify(Array.from(descriptor)) }, { onConflict: "voter_id" });
+    try {
+      const response = await fetch(`${API_URL}/register/face`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          voter_id: registrationId,
+          descriptor: Array.from(descriptor),
+        }),
+      });
 
-    if (bioError) { console.log(bioError); setMessage("Error guardando biometría"); return; }
+      const result = await response.json();
 
-    const { error: statusError } = await supabase
-      .from("registration_status")
-      .update({ current_step: 2, status: "pending" })
-      .eq("voter_id", registrationId);
+      if (!response.ok || !result.success) {
+        setMessage(result.error || "Error guardando biometría");
+        return;
+      }
 
-    if (statusError) { console.log(statusError); setMessage("Error actualizando estado"); return; }
+      setFaceSaved(true);
+      setMessage(result.message);
 
-    setFaceSaved(true);
-    setMessage("Rostro guardado correctamente");
+    } catch (err) {
+      console.error(err);
+      setMessage("Error de conexión con el servidor");
+    }
   };
 
   const stopCamera = () => {
