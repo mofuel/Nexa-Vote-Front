@@ -5,6 +5,7 @@ import API_URL from "../../config/api";
 import { useRegistration } from "../../context/useRegistration";
 import { toast } from "sonner";
 import "../../css/registro/Registroidentidad.css";
+import { supabase } from "../../lib/supabaseClient";
 
 export default function RegistroIdentidad() {
   const navigate = useNavigate();
@@ -57,9 +58,12 @@ export default function RegistroIdentidad() {
     if (loading) return;
     setLoading(true);
 
-    const { dni, full_name, birth_date, email } = formData;
+    const { dni, full_name, birth_date, email, password } = formData;
 
     try {
+
+      
+
       const response = await fetch(
         isEditMode && registrationId
           ? `${API_URL}/register/identity/${registrationId}`
@@ -67,7 +71,7 @@ export default function RegistroIdentidad() {
         {
           method: isEditMode && registrationId ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dni, full_name, birth_date, email }),
+          body: JSON.stringify({ dni, full_name, birth_date, email, password }),
         }
       );
 

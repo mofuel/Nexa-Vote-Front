@@ -9,13 +9,26 @@ export async function loginVoter(dni, password) {
     body: JSON.stringify({ dni, password }),
   });
 
-  return await response.json();
+  const data = await response.json();
+
+  if (!response.ok) {
+    return {
+      success: false,
+      error: data.error || "Error en login"
+    };
+  }
+
+  return data;
 }
 
-export async function registerVoter(formData) {
-  const response = await fetch(`${API_URL}/voters/register`, {
-    method: "POST",
-    body: formData,
+
+
+export async function getCurrentUser(token) {
+  const response = await fetch(`${API_URL}/auth/me`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
 
   return await response.json();

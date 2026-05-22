@@ -77,7 +77,7 @@ export default function ConfirmacionRegistro() {
 
     if (error) { console.log(error); return; }
 
-    navigate("/registro/exitoso");
+    navigate("/");
   };
 
   if (loading) {
