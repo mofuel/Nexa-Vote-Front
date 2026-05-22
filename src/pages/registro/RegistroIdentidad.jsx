@@ -5,7 +5,7 @@ import API_URL from "../../config/api";
 import { useRegistration } from "../../context/useRegistration";
 import { toast } from "sonner";
 import "../../css/registro/Registroidentidad.css";
-import { supabase } from "../../lib/supabaseClient";
+
 
 export default function RegistroIdentidad() {
   const navigate = useNavigate();
