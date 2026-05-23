@@ -151,3 +151,131 @@
 .ri-btn-submit:not(:disabled):hover {
   opacity: 0.9;
 }
+
+
+
+/* ── Escáner DNI ── */
+.ri-scan-zone {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.ri-scan-frame {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  height: 220px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0a0c14;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.ri-scan-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ri-scan-placeholder {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #4a4560;
+  gap: 8px;
+}
+
+.ri-scan-icon {
+  font-size: 48px;
+}
+
+.ri-scan-placeholder p {
+  font-size: 13px;
+  margin: 0;
+}
+
+/* Esquinas del frame */
+.ri-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: #6c47ff;
+  border-style: solid;
+  z-index: 2;
+}
+.ri-corner--tl { top: 8px; left: 8px;  border-width: 2px 0 0 2px; }
+.ri-corner--tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; }
+.ri-corner--bl { bottom: 8px; left: 8px;  border-width: 0 0 2px 2px; }
+.ri-corner--br { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
+
+/* Datos leídos */
+.ri-datos-leidos {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.ri-datos-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #22c55e;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.ri-datos-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+}
+
+.ri-datos-label {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.ri-datos-value {
+  color: #e6e0ef;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Tips */
+.ri-tips {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+
+.ri-tips-title {
+  color: #94a3b8;
+  font-size: 13px;
+  margin: 0 0 8px 0;
+}
+
+.ri-tips-list {
+  padding-left: 16px;
+  margin: 0;
+}
+
+.ri-tips-list li {
+  color: #94a3b8;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.ri-estado {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+  margin: 8px 0 0 0;
+}

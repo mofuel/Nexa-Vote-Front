@@ -313,3 +313,29 @@
   margin: 0;
   font-weight: 600;
 }
+
+
+.mfa1-tips {
+  margin: 12px 0;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.mfa1-tips-title {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.mfa1-tips-list {
+  padding-left: 16px;
+  margin: 0;
+}
+
+.mfa1-tips-list li {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}

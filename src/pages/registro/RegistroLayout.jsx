@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { RegistrationProvider } from "../../context/RegistrationProvider";
 
+import RegistroEscaneDNI from "./RegistroEscaneDNI";
 import RegistroIdentidad from "./RegistroIdentidad";
 import RegistroReconocimiento from "./RegistroReconocimiento";
 import RegistroBiometrico from "./RegistroBiometrico";
@@ -11,7 +12,8 @@ const RegistroLayout = () => {
     <RegistrationProvider>
       <div>
         <Routes>
-          <Route path="/" element={<RegistroIdentidad />} />
+          <Route path="/" element={<RegistroEscaneDNI />} />
+          <Route path="identidad" element={<RegistroIdentidad />} />
           <Route path="reconocimiento" element={<RegistroReconocimiento />} />
           <Route path="biometrico" element={<RegistroBiometrico />} />
           <Route path="verificacion" element={<ConfirmacionRegistro />} />

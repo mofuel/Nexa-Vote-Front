@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { BrowserPDF417Reader } from "@zxing/browser";
+import { DecodeHintType } from "@zxing/library";
 import { toast } from "sonner";
 
 import Footer from "../components/layout/footer/Footer";
@@ -16,23 +17,79 @@ export default function MFAPaso1DNI() {
 
   const [loading, setLoading] = useState(false);
   const [estado, setEstado] = useState("");
+  const [preview, setPreview] = useState(null);
 
+  const FILTROS = [
+    null,
+    "contrast(1.5) grayscale(1)",
+    "contrast(2) grayscale(1)",
+    "contrast(2.5) brightness(1.2) grayscale(1)",
+  ];
+
+  const preprocessImage = (imageUrl, filtro) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+
+      img.onload = () => {
+        canvas.width = img.width * 2;
+        canvas.height = img.height * 2;
+
+        ctx.filter = filtro;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        resolve(canvas.toDataURL("image/png"));
+      };
+
+      img.src = imageUrl;
+    });
+  };
+
+  // ── Parseo DNI ─────────────────────────────────────────────
   const parsearDNI = (raw) => {
+    console.log("RAW PDF417:", raw);
 
-    const clean = raw.replace(/\s+/g, " ").trim();
-    const numeros = clean.replace(/\D/g, "");
+    const numerosInicio = raw.match(/^\d{10}/);
+    if (!numerosInicio) return { dni: null };
 
-    let sinPadding = numeros;
-
-    if (numeros.startsWith("0")) {
-      sinPadding = numeros.slice(1);
-    }
-
-    const dni = sinPadding.slice(0, 8);
+    const bloque = numerosInicio[0];
+    const dni = bloque.slice(2, 10);
 
     return { dni };
   };
 
+  // ── REINTENTO CANVAS ───────────────────────────────────────
+  const retryWithCanvas = (imageUrl, codeReader) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+
+      img.onload = async () => {
+        const scale = img.width < 1200 ? 2 : 1;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const scaledUrl = canvas.toDataURL("image/png");
+
+        try {
+          const result = await codeReader.decodeFromImageUrl(scaledUrl);
+          resolve(result);
+        } catch (err) {
+          reject(err);
+        }
+      };
+
+      img.onerror = reject;
+      img.src = imageUrl;
+    });
+  };
+
+  // ── MAIN ────────────────────────────────────────────────────
   const handleImage = async (event) => {
 
     const token = localStorage.getItem("token");
@@ -46,37 +103,66 @@ export default function MFAPaso1DNI() {
     const file = event.target.files[0];
     if (!file) return;
 
-    try {
+    const imageUrl = URL.createObjectURL(file);
+    setPreview(imageUrl);
 
+    try {
       setLoading(true);
       setEstado("Escaneando DNI...");
 
-      const imageUrl = URL.createObjectURL(file);
+      const hints = new Map();
+      hints.set(DecodeHintType.TRY_HARDER, true);
+      hints.set(DecodeHintType.PURE_BARCODE, false);
 
-      const codeReader = new BrowserPDF417Reader();
-      const scanResult = await codeReader.decodeFromImageUrl(imageUrl);
+      const codeReader = new BrowserPDF417Reader(hints);
+
+      let scanResult = null;
+      let success = false;
+
+      // ── ESCANEO CON FILTROS ───────────────────────────────
+      for (let i = 0; i < FILTROS.length; i++) {
+        try {
+          setEstado(`Intento ${i + 1}/${FILTROS.length}`);
+
+          const url = FILTROS[i]
+            ? await preprocessImage(imageUrl, FILTROS[i])
+            : imageUrl;
+
+          scanResult = await codeReader.decodeFromImageUrl(url);
+
+          success = true;
+          break;
+        } catch (e) {}
+      }
+
+      // ❌ FIX: eliminar duplicación (ESTO ROMPÍA TODO)
+      if (!success || !scanResult) {
+        toast.error("No se pudo leer el DNI");
+        return;
+      }
 
       const rawText = scanResult.getText();
       const parsed = parsearDNI(rawText);
 
-      console.log("RAW PDF417:", rawText);
+      if (!parsed.dni) {
+        toast.error("No se pudo extraer el DNI");
+        return;
+      }
+
       console.log("DNI ESCANEADO:", parsed.dni);
 
-      const response = await fetch(
-        `${API_URL}/api/mfa/validate-dni`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            dni_scanned: parsed.dni
-          })
-        }
-      );
+      setEstado("Validando con el servidor...");
 
-      const data = await response.json(); 
+      const response = await fetch(`${API_URL}/api/mfa/validate-dni`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ dni_scanned: parsed.dni }),
+      });
+
+      const data = await response.json();
 
       if (!response.ok || !data.success) {
         toast.error(data.error || "DNI no válido");
@@ -84,16 +170,20 @@ export default function MFAPaso1DNI() {
       }
 
       toast.success("DNI validado correctamente");
-
       navigate("/mfa/facial");
 
     } catch (err) {
-
       console.error(err);
-      toast.error("Error al procesar el DNI");
+
+      if (err.name === "ChecksumException" || err.message?.includes("Checksum")) {
+        toast.error("Imagen con baja calidad");
+      } else if (err.name === "NotFoundException") {
+        toast.error("No se encontró código PDF417");
+      } else {
+        toast.error("Error al procesar DNI");
+      }
 
     } finally {
-
       setLoading(false);
       setEstado("");
     }
@@ -128,17 +218,42 @@ export default function MFAPaso1DNI() {
                 <div className="mfa1-corner mfa1-corner--tr" />
                 <div className="mfa1-corner mfa1-corner--bl" />
                 <div className="mfa1-corner mfa1-corner--br" />
-                <div className="mfa1-scan-line" />
+
+                {/* Preview de la imagen subida dentro del frame */}
+                {preview ? (
+                  <img
+                    src={preview}
+                    alt="DNI subido"
+                    style={{
+                      width: "100%", height: "100%",
+                      objectFit: "cover", borderRadius: "6px"
+                    }}
+                  />
+                ) : (
+                  <div className="mfa1-scan-line" />
+                )}
               </div>
             </div>
           </div>
 
+          {/* Tips de calidad */}
+          <div className="mfa1-tips">
+            <p className="mfa1-tips-title">Para mejores resultados:</p>
+            <ul className="mfa1-tips-list">
+              <li>Fotografía el <strong>reverso</strong> del DNI</li>
+              <li>Buena iluminación, sin reflejos ni sombras</li>
+              <li>DNI plano, sin ángulo ni perspectiva</li>
+              <li>Código de barras completo y visible</li>
+            </ul>
+          </div>
+
           <div className="mfa1-actions">
+            <label className="mfa1-btn-scan" style={{ pointerEvents: loading ? "none" : "auto", opacity: loading ? 0.6 : 1 }}>
+              <span className="material-symbols-outlined">
+                {loading ? "hourglass_top" : "camera"}
+              </span>
 
-            <label className="mfa1-btn-scan">
-              <span className="material-symbols-outlined">camera</span>
-
-              {loading ? "Escaneando..." : "Subir DNI"}
+              {loading ? estado || "Procesando..." : preview ? "Cambiar foto" : "Subir DNI"}
 
               <input
                 type="file"
@@ -146,13 +261,13 @@ export default function MFAPaso1DNI() {
                 capture="environment"
                 onChange={handleImage}
                 hidden
+                disabled={loading}
               />
             </label>
 
-            {estado && (
+            {estado && !loading && (
               <p className="mfa1-info-text">{estado}</p>
             )}
-
           </div>
 
         </div>
