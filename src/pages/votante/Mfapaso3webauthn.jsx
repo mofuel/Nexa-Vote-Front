@@ -23,9 +23,11 @@ export default function MFAPaso3WebAuthn() {
   const [statusMessage, setStatusMessage] = useState("");
 
   const handleWebAuthnValidation = async () => {
+
     const token = localStorage.getItem("token");
     const dniValid = localStorage.getItem("dni_barcode_valid");
     const faceValid = localStorage.getItem("face_valid");
+    const voterId = localStorage.getItem("voter_id");
 
     if (!token) {
       alert("Debe iniciar sesión primero");
@@ -46,61 +48,116 @@ export default function MFAPaso3WebAuthn() {
     }
 
     try {
+
       setLoading(true);
-      setStatusMessage("Solicitando autenticación biométrica del dispositivo...");
+
+      setStatusMessage(
+        "Solicitando autenticación biométrica del dispositivo..."
+      );
 
       if (!window.PublicKeyCredential) {
         alert("Este navegador no soporta WebAuthn");
         return;
       }
 
-      const challenge = new Uint8Array(32);
-      window.crypto.getRandomValues(challenge);
+      // =========================
+      // 1. pedir challenge al backend
+      // =========================
 
-      const userId = new Uint8Array(16);
-      window.crypto.getRandomValues(userId);
 
-      await navigator.credentials.create({
-        publicKey: {
-          challenge,
-          rp: { name: "NEXA Vote" },
-          user: {
-            id: userId,
-            name: "votante@nexavote.test",
-            displayName: "Votante NEXA",
-          },
-          pubKeyCredParams: [
-            { type: "public-key", alg: -7 },
-            { type: "public-key", alg: -257 },
-          ],
-          authenticatorSelection: {
-            authenticatorAttachment: "platform",
-            userVerification: "required",
-          },
-          timeout: 60000,
-          attestation: "none",
-        },
-      });
 
-      localStorage.setItem("fingerprint_valid", "true");
+      const optionsRes = await fetch(
+        "http://127.0.0.1:5000/webauthn/auth/options",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      );
 
-      const result = await validateMultifactor(token, {
-        dni_barcode_valid: true,
-        face_valid: true,
-        fingerprint_valid: true,
-      });
+      const options = await optionsRes.json();
 
-      if (!result.success) {
-        alert(result.message || "No se pudo completar la validación multifactor");
+      if (!options.success) {
+        alert(options.error || "Error obteniendo challenge");
         return;
       }
 
-      setStatusMessage("Validación multifactor completada correctamente");
+      // =========================
+      // 2. decode challenge
+      // =========================
+
+      const challenge = Uint8Array.from(
+        atob(options.challenge),
+        c => c.charCodeAt(0)
+      );
+
+      // =========================
+      // 3. AUTENTICAR (NO REGISTRAR)
+      // =========================
+
+      const credential = await navigator.credentials.get({
+        publicKey: {
+          challenge,
+          userVerification: "required",
+          timeout: 60000
+        }
+      });
+
+      if (!credential) {
+        alert("No se pudo autenticar biometría");
+        return;
+      }
+
+      // =========================
+      // 4. enviar credential al backend
+      // =========================
+
+      const payload = {
+        voter_id: voterId,
+        id: credential.id
+      };
+
+      const verifyRes = await fetch(
+        "http://127.0.0.1:5000/webauthn/auth/verify",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+
+      const result = await verifyRes.json();
+
+      if (!verifyRes.ok || !result.success) {
+        alert(result.error || "Error validando WebAuthn");
+        return;
+      }
+
+      // =========================
+      // 5. MFA COMPLETADO
+      // =========================
+
+      localStorage.setItem("fingerprint_valid", "true");
+
+      setStatusMessage(
+        "Validación multifactor completada correctamente"
+      );
+
       navigate("/candidatos");
 
     } catch (error) {
+
       console.error(error);
-      alert("La autenticación biométrica fue cancelada o falló");
+
+      if (error.name === "NotAllowedError") {
+        alert("Autenticación cancelada");
+      } else {
+        alert("Error en autenticación WebAuthn");
+      }
+
     } finally {
       setLoading(false);
     }

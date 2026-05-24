@@ -241,6 +241,9 @@ export default function MFAPaso2Facial() {
 
       setPhase("success");
       setMessage("Identidad verificada ✓");
+
+      localStorage.setItem("face_valid", "true");
+
       toast.success("Rostro validado correctamente");
 
       stopCamera();

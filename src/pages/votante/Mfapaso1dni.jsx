@@ -3,13 +3,13 @@ import { useState } from "react";
 import { BrowserPDF417Reader } from "@zxing/browser";
 import { DecodeHintType } from "@zxing/library";
 import { toast } from "sonner";
-
+import API_URL from "../../config/api";
 import Footer from "../components/layout/footer/Footer";
 import MFAStepper from "../components/ui/MFAStepper";
 
 import "../../css/votante/Mfapaso1dni.css";
 
-const API_URL = "http://127.0.0.1:5000";
+
 
 export default function MFAPaso1DNI() {
 
