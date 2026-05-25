@@ -35,6 +35,7 @@ export default function LoginVotante() {
       }
 
       localStorage.setItem("token", result.data.token);
+      localStorage.setItem("voter_id", result.data.user.id);
       localStorage.setItem("voter", JSON.stringify(result.data.user));
 
       navigate("/mfa/escaneo");

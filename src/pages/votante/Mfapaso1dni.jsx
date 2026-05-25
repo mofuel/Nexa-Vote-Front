@@ -46,7 +46,6 @@ export default function MFAPaso1DNI() {
     });
   };
 
-  // ── Parseo DNI ─────────────────────────────────────────────
   const parsearDNI = (raw) => {
     console.log("RAW PDF417:", raw);
 
@@ -59,7 +58,6 @@ export default function MFAPaso1DNI() {
     return { dni };
   };
 
-  // ── REINTENTO CANVAS ───────────────────────────────────────
   const retryWithCanvas = (imageUrl, codeReader) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -89,7 +87,6 @@ export default function MFAPaso1DNI() {
     });
   };
 
-  // ── MAIN ────────────────────────────────────────────────────
   const handleImage = async (event) => {
 
     const token = localStorage.getItem("token");
@@ -119,7 +116,6 @@ export default function MFAPaso1DNI() {
       let scanResult = null;
       let success = false;
 
-      // ── ESCANEO CON FILTROS ───────────────────────────────
       for (let i = 0; i < FILTROS.length; i++) {
         try {
           setEstado(`Intento ${i + 1}/${FILTROS.length}`);
@@ -135,7 +131,6 @@ export default function MFAPaso1DNI() {
         } catch (e) {}
       }
 
-      // ❌ FIX: eliminar duplicación (ESTO ROMPÍA TODO)
       if (!success || !scanResult) {
         toast.error("No se pudo leer el DNI");
         return;
@@ -149,7 +144,6 @@ export default function MFAPaso1DNI() {
         return;
       }
 
-      console.log("DNI ESCANEADO:", parsed.dni);
 
       setEstado("Validando con el servidor...");
 

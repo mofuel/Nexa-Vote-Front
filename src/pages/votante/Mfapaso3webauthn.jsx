@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Footer from "../components/layout/footer/Footer";
 import MFAStepper from "../components/ui/MFAStepper";
 import { validateMultifactor } from "../../services/api";
+import API_URL from "../../config/api";
 import "../../css/votante/Mfapaso3webauthn.css";
 
 const STEP_CHIPS = [
@@ -67,7 +68,7 @@ export default function MFAPaso3WebAuthn() {
 
 
       const optionsRes = await fetch(
-        "http://127.0.0.1:5000/webauthn/auth/options",
+        `${API_URL}/webauthn/auth/options`,
         {
           method: "POST",
           headers: {
@@ -119,7 +120,7 @@ export default function MFAPaso3WebAuthn() {
       };
 
       const verifyRes = await fetch(
-        "http://127.0.0.1:5000/webauthn/auth/verify",
+        `${API_URL}/webauthn/auth/verify`,
         {
           method: "POST",
           headers: {

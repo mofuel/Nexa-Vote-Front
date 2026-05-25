@@ -3,12 +3,10 @@ import { useNavigate } from "react-router-dom";
 import * as faceapi from "face-api.js";
 import { toast } from "sonner";
 import Footer from "../components/layout/footer/Footer";
+import API_URL from "../../config/api";
 import MFAStepper from "../components/ui/MFAStepper";
 import "../../css/votante/Mfapaso2facial.css";
 
-const API_URL = "http://127.0.0.1:5000";
-
-// ─── Helpers de calidad (mismos que registro) ─────────────────────────────────
 
 const isFaceFrontal = (landmarks) => {
   const leftEye  = landmarks.getLeftEye();
@@ -44,14 +42,12 @@ const isFaceVertical = (landmarks) => {
   return verticalOffset > eyeDistance * 0.5 && verticalOffset < eyeDistance * 2.5;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function MFAPaso2Facial() {
   const navigate  = useNavigate();
   const videoRef  = useRef(null);
 
   const [phase, setPhase]               = useState("idle");
-  // idle | loading_models | liveness | capturing | validating | success | error
   const [message, setMessage]           = useState("Presiona Iniciar para comenzar");
   const [livenessPassed, setLivenessPassed] = useState(false);
   const [captureStep, setCaptureStep]   = useState(0);
@@ -62,7 +58,6 @@ export default function MFAPaso2Facial() {
   const runningLiveness = useRef(false);
   const intervalRef     = useRef(null);
 
-  // ── Modelos ────────────────────────────────────────────────────────────────
   const loadModels = async () => {
     await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
     await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
@@ -70,7 +65,6 @@ export default function MFAPaso2Facial() {
     await faceapi.nets.faceExpressionNet.loadFromUri("/models");
   };
 
-  // ── Cámara ─────────────────────────────────────────────────────────────────
   const startCamera = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     videoRef.current.srcObject = stream;
@@ -84,7 +78,6 @@ export default function MFAPaso2Facial() {
     }
   };
 
-  // ── Liveness ───────────────────────────────────────────────────────────────
   const startLiveness = () => {
     runningLiveness.current = true;
     step.current          = 0;
@@ -132,14 +125,12 @@ export default function MFAPaso2Facial() {
           runningLiveness.current = false;
           setLivenessPassed(true);
           setMessage("Liveness aprobado ✓ — capturando rostro...");
-          // Arranca captura automáticamente tras liveness
           await captureAndValidate();
         }
       }
     }, 300);
   };
 
-  // ── Captura con validación de calidad ──────────────────────────────────────
   const captureDescriptor = async () => {
     const samples      = [];
     const MAX_INTENTOS = 20;
@@ -199,7 +190,6 @@ export default function MFAPaso2Facial() {
     );
   };
 
-  // ── Captura + envío al backend ─────────────────────────────────────────────
   const captureAndValidate = async () => {
     setPhase("capturing");
     setMessage("Capturando rostro...");
@@ -257,7 +247,6 @@ export default function MFAPaso2Facial() {
     }
   };
 
-  // ── Inicio del flujo completo ──────────────────────────────────────────────
   const handleIniciar = async () => {
     const token    = localStorage.getItem("token");
     const dniValid = localStorage.getItem("dni_barcode_valid");
@@ -295,7 +284,6 @@ export default function MFAPaso2Facial() {
     }
   };
 
-  // ── Reintentar ─────────────────────────────────────────────────────────────
   const handleReintentar = async () => {
     setLivenessPassed(false);
     setCaptureStep(0);
@@ -311,7 +299,6 @@ export default function MFAPaso2Facial() {
     };
   }, []);
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="mfa2-page">
 
