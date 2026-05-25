@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [react()],
   preview: {
     port: 10000,
-    host: true
+    host: true,
+    allowedHosts: ['nexa-vote-front.onrender.com']
   }
 })
