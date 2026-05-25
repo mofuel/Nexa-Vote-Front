@@ -1,0 +1,327 @@
+/* LoginAdmin.css */
+
+.la-page {
+  background-color: #0a0c14;
+  background-image: radial-gradient(rgba(108, 71, 255, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+  min-height: 100vh;
+  color: #e6e0ef;
+  font-family: Inter, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.la-header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 50;
+  background: rgba(20, 18, 28, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 64px;
+}
+
+.la-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+  max-width: 1280px;
+  margin: 0 auto;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.la-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.la-logo {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: #c9beff;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+}
+
+.la-nav-divider {
+  height: 24px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.la-nav-subtitle {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 10px;
+  color: #c9c3d9;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.la-nav-icons {
+  display: flex;
+  gap: 12px;
+}
+
+.la-nav-icon {
+  color: #c9beff;
+}
+
+/* ── Main ── */
+.la-main {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 96px 16px 48px;
+}
+
+.la-container {
+  width: 100%;
+  max-width: 480px;
+}
+
+/* ── Access Header ── */
+.la-access-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.la-icon-circle {
+  width: 64px;
+  height: 64px;
+  background: rgba(108, 71, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  border: 1px solid rgba(201, 190, 255, 0.2);
+}
+
+.la-icon-circle .material-symbols-outlined {
+  color: #c9beff;
+  font-size: 32px;
+}
+
+.la-access-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  text-align: center;
+  color: #fff;
+  margin: 0;
+}
+
+.la-access-subtitle {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 10px;
+  color: #c9c3d9;
+  margin-top: 8px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* ── Form Card ── */
+.la-card {
+  background: rgba(19, 22, 42, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.la-card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: #c9beff;
+}
+
+/* ── Form ── */
+.la-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.la-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.la-label {
+  font-size: 14px;
+  color: #c9c3d9;
+  font-weight: 600;
+}
+
+.la-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.la-forgot-link {
+  font-size: 10px;
+  color: #c9beff;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.la-input-wrap {
+  position: relative;
+}
+
+.la-input-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: #c9c3d9;
+  pointer-events: none;
+}
+
+.la-input {
+  background: #13162a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: border-color 0.3s ease;
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  border-radius: 8px;
+  color: #fff;
+  outline: none;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.la-input:focus {
+  border-color: #c9beff;
+}
+
+/* ── Submit ── */
+.la-btn-submit {
+  background: #6c47ff;
+  color: #fff;
+  border: none;
+  padding: 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: filter 0.2s;
+  font-family: inherit;
+  width: 100%;
+}
+
+.la-btn-submit:hover {
+  filter: brightness(1.1);
+}
+
+/* ── Security Badges ── */
+.la-security-badges {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.la-security-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.la-security-badge .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.la-badge-icon--teal   { color: #41eec2; }
+.la-badge-icon--orange { color: #ffb691; }
+
+.la-security-badge span:last-child {
+  font-size: 10px;
+  color: #c9c3d9;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ── Secondary Links ── */
+.la-secondary-links {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 24px;
+  align-items: center;
+}
+
+.la-secondary-link {
+  font-size: 11px;
+  color: #c9c3d9;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  text-decoration: none;
+}
+
+.la-secondary-sep {
+  color: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Footer ── */
+.la-footer {
+  background: #14121c;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 32px 40px;
+}
+
+.la-footer-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1280px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.la-footer-copy {
+  font-size: 10px;
+  color: #c9c3d9;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.la-footer-links {
+  display: flex;
+  gap: 24px;
+}
+
+.la-footer-link {
+  color: #c9c3d9;
+  font-size: 11px;
+  text-decoration: underline;
+}

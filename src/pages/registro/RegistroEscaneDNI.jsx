@@ -7,7 +7,7 @@ import Footer from "../components/layout/footer/Footer";
 import API_URL from "../../config/api";
 import "../../css/registro/Registroidentidad.css";
 
-// ── Parseo PDF417 DNI Perú ────────────────────────────────────────────────────
+
 const parsearDNI = (raw) => {
     console.log("RAW PDF417:", raw);
 
@@ -42,7 +42,7 @@ const parsearDNI = (raw) => {
     };
 };
 
-// ── Filtros de preprocesado para mejorar lectura ──────────────────────────────
+
 const FILTROS = [
     null,
     "contrast(1.5) grayscale(1)",
@@ -66,7 +66,7 @@ const preprocessImage = (imageUrl, filtro) => {
     });
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 export default function RegistroEscaneDNI() {
     const navigate = useNavigate();
@@ -75,9 +75,9 @@ export default function RegistroEscaneDNI() {
     const [loading, setLoading] = useState(false);
     const [estado, setEstado] = useState("");
     const [preview, setPreview] = useState(null);
-    const [datosLeidos, setDatosLeidos] = useState(null); // {dni, full_name, birth_date}
+    const [datosLeidos, setDatosLeidos] = useState(null); 
 
-    // ── Escaneo ───────────────────────────────────────────────────────────────
+
     const handleImage = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -124,7 +124,7 @@ export default function RegistroEscaneDNI() {
         setLoading(false);
     };
 
-    // ── Envío al backend ──────────────────────────────────────────────────────
+
     const handleContinuar = async () => {
         if (!datosLeidos) return;
         setLoading(true);
@@ -160,7 +160,6 @@ export default function RegistroEscaneDNI() {
         }
     };
 
-    // ── Render ────────────────────────────────────────────────────────────────
     return (
         <div className="ri-page">
 

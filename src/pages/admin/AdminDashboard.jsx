@@ -3,6 +3,7 @@ import AdminSidebar from '../components/layout/sidebar/AdminSidebar'
 import AdminHeader from '../components/layout/header/AdminHeader'
 import Footer from '../components/layout/footer/AdminFooter'
 
+
 const glassPanel = {
   background: 'rgba(19, 22, 42, 0.6)',
   backdropFilter: 'blur(12px)',

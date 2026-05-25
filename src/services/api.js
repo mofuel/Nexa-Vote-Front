@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:5000/api";
+import API_URL from "../config/api";
 
 export async function loginVoter(dni, password) {
   const response = await fetch(`${API_URL}/auth/login`, {
@@ -72,6 +72,23 @@ export async function getReport(token) {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+  });
+
+  return await response.json();
+}
+
+
+
+export async function loginAdmin(email, password) {
+  const response = await fetch(`${API_URL}/api/admin/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      password
+    }),
   });
 
   return await response.json();

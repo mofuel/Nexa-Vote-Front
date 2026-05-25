@@ -1,0 +1,451 @@
+/* AdminDashboard.css */
+
+.ad-layout {
+  display: flex;
+  background: #14121c;
+  color: #e6e0ef;
+  min-height: 100vh;
+  font-family: Inter, sans-serif;
+}
+
+/* ── Main ── */
+.ad-main {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin-left: 256px;
+  overflow-y: auto;
+}
+
+.ad-content {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* ── Glass Panel (shared base) ── */
+.ad-glass {
+  background: rgba(19, 22, 42, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Stats Row ── */
+.ad-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+/* Voting Status card */
+.ad-stat-card {
+  padding: 24px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ad-stat-label {
+  font-size: 11px;
+  color: #c9c3d9;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 4px;
+}
+
+.ad-stat-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  margin: 0;
+}
+
+.ad-toggle {
+  width: 48px;
+  height: 24px;
+  border-radius: 999px;
+  background: #41eec2;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ad-toggle-knob {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+/* Votes card */
+.ad-votes-card {
+  padding: 24px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ad-votes-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: rgba(201, 190, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ad-votes-icon-wrap .material-symbols-outlined {
+  color: #c9beff;
+  font-size: 28px;
+}
+
+.ad-votes-value {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  margin: 0;
+}
+
+/* ── Results + Chart row ── */
+.ad-results-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+/* Results section */
+.ad-results {
+  padding: 24px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.ad-results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ad-results-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  margin: 0 0 4px;
+}
+
+.ad-results-subtitle {
+  color: #c9c3d9;
+  font-size: 14px;
+  margin: 0;
+}
+
+.ad-results-refresh {
+  font-size: 11px;
+  color: #c9c3d9;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.ad-candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ad-candidate-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ad-candidate-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ad-candidate-votes {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ad-bar-track {
+  height: 16px;
+  background: #201e29;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ad-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.ad-results-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 16px;
+  text-align: right;
+}
+
+.ad-btn-analytics {
+  color: #c9beff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+}
+
+.ad-btn-analytics .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* Turnout section */
+.ad-turnout {
+  padding: 24px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ad-turnout-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  width: 100%;
+  margin: 0 0 4px;
+}
+
+.ad-turnout-subtitle {
+  color: #c9c3d9;
+  font-size: 14px;
+  width: 100%;
+  margin: 0 0 24px;
+}
+
+.ad-donut-wrap {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ad-donut-wrap svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ad-donut-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ad-donut-pct {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1;
+}
+
+.ad-donut-status {
+  color: #41eec2;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+.ad-turnout-total {
+  margin-top: 24px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ad-turnout-total-label {
+  font-size: 10px;
+  color: #c9c3d9;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.ad-turnout-total-value {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* ── Audit Log ── */
+.ad-audit {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ad-audit-header {
+  padding: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.ad-audit-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  margin: 0 0 4px;
+}
+
+.ad-audit-subtitle {
+  color: #c9c3d9;
+  font-size: 14px;
+  margin: 0;
+}
+
+.ad-audit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ad-btn-action {
+  padding: 8px 16px;
+  background: #201e29;
+  border: none;
+  border-radius: 8px;
+  color: #c9c3d9;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+.ad-table-wrap {
+  overflow-x: auto;
+}
+
+.ad-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.ad-table thead tr {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ad-table th {
+  padding: 16px 24px;
+  text-align: left;
+  font-size: 11px;
+  color: #c9c3d9;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+}
+
+.ad-table tbody tr {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ad-table td {
+  padding: 16px 24px;
+}
+
+.ad-td-time {
+  font-size: 12px;
+  font-family: "Space Grotesk", sans-serif;
+  letter-spacing: 0.1em;
+}
+
+.ad-td-action {
+  font-size: 14px;
+  font-weight: 700;
+  color: #c9beff;
+}
+
+.ad-td-validator {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.ad-td-region {
+  font-size: 14px;
+}
+
+.ad-level-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.ad-status-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ad-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #41eec2;
+  flex-shrink: 0;
+}
+
+.ad-status-text {
+  font-size: 14px;
+}
+
+.ad-audit-footer {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  text-align: center;
+}
+
+.ad-btn-view-all {
+  color: #c9beff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-family: inherit;
+}
