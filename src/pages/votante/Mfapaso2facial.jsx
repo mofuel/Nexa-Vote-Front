@@ -4,7 +4,7 @@ import * as faceapi from "face-api.js";
 import { toast } from "sonner";
 import Footer from "../components/layout/footer/Footer";
 import API_URL from "../../config/api";
-import MFAStepper from "../components/ui/MFAStepper";
+import MFAStepper from "../components/ui/Mfastepper";
 import "../../css/votante/Mfapaso2facial.css";
 
 

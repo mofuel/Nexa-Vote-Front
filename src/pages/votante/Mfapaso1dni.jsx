@@ -5,7 +5,7 @@ import { DecodeHintType } from "@zxing/library";
 import { toast } from "sonner";
 import API_URL from "../../config/api";
 import Footer from "../components/layout/footer/Footer";
-import MFAStepper from "../components/ui/MFAStepper";
+import MFAStepper from "../components/ui/Mfastepper";
 
 import "../../css/votante/Mfapaso1dni.css";
 

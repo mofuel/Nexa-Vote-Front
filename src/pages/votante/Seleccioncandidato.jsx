@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/layout/footer/Footer";
 import { getCandidates, castVote } from "../../services/api";
-import "../../css/votante/SeleccionCandidato.css";
+import "../../css/votante/Seleccioncandidato.css";
 
 const NAV_LINKS = ["Resultados", "Cédula", "Recursos"];
 const CARD_TAGS = ["CANDIDATO", "OFICIAL"];

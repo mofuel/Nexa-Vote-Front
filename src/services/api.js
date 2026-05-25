@@ -48,12 +48,12 @@ export async function validateMultifactor(token, data) {
 }
 
 export async function getCandidates() {
-  const response = await fetch(`${API_URL}/votes/candidates`);
+  const response = await fetch(`${API_URL}/api/votes/candidates`);
   return await response.json();
 }
 
 export async function castVote(token, candidateId) {
-  const response = await fetch(`${API_URL}/votes/cast`, {
+  const response = await fetch(`${API_URL}/api/votes/cast`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

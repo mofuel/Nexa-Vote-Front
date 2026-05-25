@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/layout/footer/Footer";
-import MFAStepper from "../components/ui/MFAStepper";
+import MFAStepper from "../components/ui/Mfastepper";
 import { validateMultifactor } from "../../services/api";
 import API_URL from "../../config/api";
 import "../../css/votante/Mfapaso3webauthn.css";
