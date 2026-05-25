@@ -21,7 +21,6 @@ export default function RegistroIdentidad() {
 
   const [loading, setLoading] = useState(false);
 
-  // ── cargar datos del scan ─────────────────────────────
   useEffect(() => {
 
     if (!registrationId) return;
@@ -59,7 +58,6 @@ export default function RegistroIdentidad() {
     }));
   };
 
-  // ── enviar registro final ─────────────────────────────
   const handleContinue = async () => {
 
     if (loading) return;

@@ -1,7 +1,7 @@
 import API_URL from "../config/api";
 
 export async function loginVoter(dni, password) {
-  const response = await fetch(`${API_URL}/auth/login`, {
+  const response = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -93,3 +93,22 @@ export async function loginAdmin(email, password) {
 
   return await response.json();
 }
+
+
+
+
+export async function getVoteResults() {
+  const response = await fetch(`${API_URL}/api/votes/results`);
+  return await response.json();
+}
+
+export async function getTotalVotes() {
+  const response = await fetch(`${API_URL}/api/votes/total`);
+  return await response.json();
+}
+
+export async function getTurnout() {
+  const response = await fetch(`${API_URL}/api/votes/turnout`);
+  return await response.json();
+}
+

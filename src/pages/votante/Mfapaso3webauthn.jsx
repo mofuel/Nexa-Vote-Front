@@ -61,9 +61,6 @@ export default function MFAPaso3WebAuthn() {
         return;
       }
 
-      // =========================
-      // 1. pedir challenge al backend
-      // =========================
 
 
 
@@ -84,18 +81,13 @@ export default function MFAPaso3WebAuthn() {
         return;
       }
 
-      // =========================
-      // 2. decode challenge
-      // =========================
 
       const challenge = Uint8Array.from(
         atob(options.challenge),
         c => c.charCodeAt(0)
       );
 
-      // =========================
-      // 3. AUTENTICAR (NO REGISTRAR)
-      // =========================
+
 
       const credential = await navigator.credentials.get({
         publicKey: {
@@ -110,9 +102,7 @@ export default function MFAPaso3WebAuthn() {
         return;
       }
 
-      // =========================
-      // 4. enviar credential al backend
-      // =========================
+
 
       const payload = {
         voter_id: voterId,
@@ -137,9 +127,6 @@ export default function MFAPaso3WebAuthn() {
         return;
       }
 
-      // =========================
-      // 5. MFA COMPLETADO
-      // =========================
 
       localStorage.setItem("fingerprint_valid", "true");
 

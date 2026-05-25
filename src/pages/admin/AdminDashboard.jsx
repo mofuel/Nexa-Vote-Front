@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AdminSidebar from '../components/layout/sidebar/AdminSidebar'
 import AdminHeader from '../components/layout/header/AdminHeader'
 import Footer from '../components/layout/footer/AdminFooter'
-
+import { getVoteResults, getTotalVotes, getTurnout } from "../../services/api";
 
 const glassPanel = {
   background: 'rgba(19, 22, 42, 0.6)',
@@ -10,20 +10,106 @@ const glassPanel = {
   border: '1px solid rgba(255, 255, 255, 0.06)',
 }
 
-const candidates = [
-  { name: 'Sarah Jenkins (Democratic Integrity)', votes: '1,240,512', color: '#c9beff', pct: '72%' },
-  { name: 'Marcus Thorne (Sovereign Future)',     votes: '985,210',   color: '#41eec2', pct: '58%' },
-  { name: 'Elena Rodriguez (New Vision)',          votes: '452,198',   color: '#484556', pct: '26%' },
-]
 
 const auditLogs = [
-  { time: '14:22:15.002', action: 'Tally Validation',   validator: 'VAL-992-X-NODE', region: 'Western Sector 7',  level: 'LEVEL 4', levelColor: '#c9beff', status: 'Verified' },
-  { time: '14:21:58.841', action: 'Packet Integrity',   validator: 'VAL-102-B-NODE', region: 'Mainframe Alpha',    level: 'LEVEL 2', levelColor: '#41eec2', status: 'Verified' },
-  { time: '14:20:44.210', action: 'Credential Refresh', validator: 'ADMIN-SYS-001',  region: 'Security Terminal',  level: 'LEVEL 5', levelColor: '#6c47ff', status: 'Success'  },
+  { time: '14:22:15.002', action: 'Tally Validation', validator: 'VAL-992-X-NODE', region: 'Western Sector 7', level: 'LEVEL 4', levelColor: '#c9beff', status: 'Verified' },
+  { time: '14:21:58.841', action: 'Packet Integrity', validator: 'VAL-102-B-NODE', region: 'Mainframe Alpha', level: 'LEVEL 2', levelColor: '#41eec2', status: 'Verified' },
+  { time: '14:20:44.210', action: 'Credential Refresh', validator: 'ADMIN-SYS-001', region: 'Security Terminal', level: 'LEVEL 5', levelColor: '#6c47ff', status: 'Success' },
 ]
+
 
 export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const [results, setResults] = useState([])
+  const [totalVotes, setTotalVotes] = useState(0)
+  const [turnout, setTurnout] = useState(0)
+
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  const fetchStats = async () => {
+    try {
+      const totalData = await getTotalVotes()
+      const turnoutData = await getTurnout()
+
+      console.log("TOTAL:", totalData)
+      console.log("TURNOUT:", turnoutData)
+
+      setTotalVotes(totalData?.total ?? 0)
+      setTurnout(turnoutData?.percentage ?? 0)
+
+    } catch (err) {
+      console.error(err)
+      setError("Error al cargar estadísticas")
+    }
+  }
+
+  const fetchResults = async () => {
+    try {
+      const data = await getVoteResults()
+
+      console.log("RESULTS API:", data)
+
+      if (data?.success) {
+        setResults(data.data || [])
+      } else {
+        setResults([])
+        setError("Error al cargar resultados")
+      }
+
+    } catch (err) {
+      console.error(err)
+      setError("Error de conexión con el backend")
+    }
+  }
+
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true)
+
+      await Promise.all([
+        fetchStats(),
+        fetchResults()
+      ])
+
+      setLoading(false)
+    }
+
+    init()
+  }, [])
+
+  const maxVotes = Math.max(...results.map(r => r.total || 0), 1);
+
+
+  const TOTAL_VOTERS = 150;
+
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
+
+
+  const turnoutPct = Number(turnout) || 0;
+
+
+  const safeTurnout = Math.min(Math.max(turnoutPct, 0), 100);
+
+  const offset = circumference - (safeTurnout / 100) * circumference;
+
+
+  const candidates = results.map((r, i) => ({
+    name: r.candidate_name,
+    votes: r.total,
+    color: "#41eec2",
+    pct: maxVotes ? `${(r.total / maxVotes) * 100}%` : "0%"
+  }))
+
+
+
+
+
+
+
+
 
   return (
     <div style={{ display: 'flex', background: '#14121c', color: '#e6e0ef', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
@@ -53,7 +139,9 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p style={{ fontSize: '11px', color: '#c9c3d9', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>Votos Emitidos</p>
-                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '22px' }}>2,677,920</p>
+                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '22px' }}>
+                  {totalVotes.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
@@ -93,17 +181,38 @@ export default function AdminDashboard() {
               <p style={{ color: '#c9c3d9', fontSize: '14px', width: '100%', marginBottom: '24px' }}>Registered voter turnout</p>
               <div style={{ position: 'relative', width: '160px', height: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-                  <circle cx="50%" cy="50%" r="42%" fill="transparent" stroke="#201e29" strokeWidth="8%" />
-                  <circle cx="50%" cy="50%" r="42%" fill="transparent" stroke="#41eec2" strokeWidth="8%" strokeDasharray="264" strokeDashoffset="53" />
+                  <circle
+                    cx="50%"
+                    cy="50%"
+                    r="42%"
+                    fill="transparent"
+                    stroke="#201e29"
+                    strokeWidth="8%"
+                  />
+
+                  <circle
+                    cx="50%"
+                    cy="50%"
+                    r="42%"
+                    fill="transparent"
+                    stroke="#41eec2"
+                    strokeWidth="8%"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={offset}
+                  />
                 </svg>
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '32px', lineHeight: 1 }}>80.2%</span>
+                  <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '32px', lineHeight: 1 }}>
+                    {turnout}%
+                  </span>
                   <span style={{ color: '#41eec2', fontSize: '11px', letterSpacing: '0.1em' }}>ACTIVE</span>
                 </div>
               </div>
               <div style={{ marginTop: '24px', width: '100%', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '10px', color: '#c9c3d9', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Current Total</span>
-                <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '13px' }}>2,147,511 / 2,677,920</span>
+                <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '13px' }}>
+                  {totalVotes.toLocaleString()} / {TOTAL_VOTERS}
+                </span>
               </div>
             </section>
           </div>

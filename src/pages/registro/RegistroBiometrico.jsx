@@ -22,9 +22,7 @@ const RegistroBiometrico = () => {
         return;
       }
 
-      // =========================
-      // 1. pedir OPTIONS al backend
-      // =========================
+
       const optionsRes = await fetch(`${API_URL}/webauthn/register/options`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -38,15 +36,12 @@ const RegistroBiometrico = () => {
         return;
       }
 
-      // decode challenge
       const challenge = Uint8Array.from(
         atob(options.challenge),
         c => c.charCodeAt(0)
       );
 
-      // =========================
-      // 2. crear credencial
-      // =========================
+
       const credential = await navigator.credentials.create({
         publicKey: {
           challenge,
@@ -74,9 +69,7 @@ const RegistroBiometrico = () => {
         return;
       }
 
-      // =========================
-      // 3. enviar al backend
-      // =========================
+ 
       const payload = {
         id: credential.id,
         rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
@@ -105,9 +98,7 @@ const RegistroBiometrico = () => {
         return;
       }
 
-      // =========================
-      // 4. actualizar estado (AHORA backend idealmente lo hace)
-      // =========================
+
       setRegistrado(true);
       setMensaje("Biometría registrada correctamente");
 

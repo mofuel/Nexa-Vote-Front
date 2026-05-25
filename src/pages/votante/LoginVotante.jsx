@@ -30,15 +30,23 @@ export default function LoginVotante() {
       const result = await loginVoter(dni, password);
 
       if (!result.success) {
-        setError(result.message || "Credenciales inválidas");
+        setError(result.error || "Credenciales inválidas");
         return;
       }
 
-      localStorage.setItem("token", result.data.token);
-      localStorage.setItem("voter_id", result.data.user.id);
-      localStorage.setItem("voter", JSON.stringify(result.data.user));
+      const { token, user, has_voted } = result.data;
+
+      if (has_voted) {
+        setError("Ya has emitido tu voto. No puedes volver a ingresar.");
+        return;
+      }
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("voter_id", user.id);
+      localStorage.setItem("voter", JSON.stringify(user));
 
       navigate("/mfa/escaneo");
+
     } catch {
       setError("No se pudo conectar con el backend");
     } finally {

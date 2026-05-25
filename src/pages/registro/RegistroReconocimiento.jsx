@@ -47,7 +47,6 @@ const isFaceVertical = (landmarks) => {
   return verticalOffset > eyeDistance * 0.5 && verticalOffset < eyeDistance * 2.5;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function RegistroReconocimiento() {
   const videoRef = useRef(null);
@@ -66,7 +65,6 @@ export default function RegistroReconocimiento() {
   const stableCounter  = useRef(0);
   const runningLiveness = useRef(false);
 
-  // ── Modelos ────────────────────────────────────────────────────────────────
   const loadModels = async () => {
     await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
     await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
@@ -74,7 +72,7 @@ export default function RegistroReconocimiento() {
     await faceapi.nets.faceExpressionNet.loadFromUri("/models");
   };
 
-  // ── Cámara ─────────────────────────────────────────────────────────────────
+
   const startCamera = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     videoRef.current.srcObject = stream;
@@ -97,7 +95,7 @@ export default function RegistroReconocimiento() {
     setCameraOn(false);
   };
 
-  // ── Liveness (sin cambios) ─────────────────────────────────────────────────
+  // Liveness 
   const startLiveness = () => {
     if (!cameraOn) return setMessage("Inicia la cámara primero");
 
@@ -151,7 +149,7 @@ export default function RegistroReconocimiento() {
     }, 300);
   };
 
-  // ── Captura con validación de calidad ──────────────────────────────────────
+  // Captura con validación de calidad 
   const captureDescriptor = async () => {
     setLoading(true);
     const samples     = [];
@@ -167,20 +165,18 @@ export default function RegistroReconocimiento() {
           videoRef.current,
           new faceapi.TinyFaceDetectorOptions({
             inputSize: 224,
-            scoreThreshold: 0.85,   // solo detecciones confiables
+            scoreThreshold: 0.85,   
           })
         )
         .withFaceLandmarks()
         .withFaceDescriptor();
 
-      // ❌ Sin detección confiable
       if (!detection) {
         setMessage("Rostro no detectado, ajusta tu posición...");
         await new Promise((r) => setTimeout(r, 300));
         continue;
       }
 
-      // ❌ Rostro muy pequeño (usuario muy lejos)
       const box       = detection.detection.box;
       const faceRatio = (box.width * box.height) /
                         (videoRef.current.videoWidth * videoRef.current.videoHeight);
@@ -191,21 +187,18 @@ export default function RegistroReconocimiento() {
         continue;
       }
 
-      // ❌ Rostro girado horizontalmente
       if (!isFaceFrontal(detection.landmarks)) {
         setMessage("Mira de frente a la cámara");
         await new Promise((r) => setTimeout(r, 300));
         continue;
       }
 
-      // ❌ Cabeza muy inclinada arriba/abajo
       if (!isFaceVertical(detection.landmarks)) {
         setMessage("Mantén la cabeza recta");
         await new Promise((r) => setTimeout(r, 300));
         continue;
       }
 
-      // ✅ Frame válido
       samples.push(detection.descriptor);
       setMessage(`Capturando rostro (${samples.length}/5) ✓`);
       await new Promise((r) => setTimeout(r, 250));
@@ -213,7 +206,6 @@ export default function RegistroReconocimiento() {
 
     setCaptureStep(0);
 
-    // No se lograron 5 frames buenos en 20 intentos
     if (samples.length < 5) {
       setLoading(false);
       setMessage("No se pudo capturar. Mejora la iluminación e intenta de nuevo.");
@@ -222,7 +214,6 @@ export default function RegistroReconocimiento() {
 
     setMessage("Procesando rostro...");
 
-    // Promedio solo de frames limpios
     const avg = samples[0].map((_, i) =>
       samples.reduce((s, d) => s + d[i], 0) / samples.length
     );
@@ -231,7 +222,7 @@ export default function RegistroReconocimiento() {
     return avg;
   };
 
-  // ── Registro ───────────────────────────────────────────────────────────────
+  // Registro
   const registerFace = async () => {
     if (!livenessPassed) return setMessage("Falta verificación de vida");
 
@@ -264,7 +255,7 @@ export default function RegistroReconocimiento() {
     }
   };
 
-  // ── Navegación ─────────────────────────────────────────────────────────────
+  // Navegación
   const goNext = () => { stopCamera(); navigate("/registro/biometrico"); };
 
   useEffect(() => {
@@ -272,7 +263,7 @@ export default function RegistroReconocimiento() {
     return () => stopCamera();
   }, []);
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  
   return (
     <div className="rr-page">
       <div className="rr-card">
