@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../../context/ThemeContext";
 import Footer from "../components/layout/footer/Footer";
 import MFAStepper from "../components/ui/Mfastepper";
-import { validateMultifactor } from "../../services/api";
-import API_URL from "../../config/api";
 import "../../css/votante/Mfapaso3webauthn.css";
+import { webauthnAuthOptions, webauthnAuthVerify } from "../../services/api";
 
 const STEP_CHIPS = [
   { icon: "verified_user", label: "Paso 1: Escaneo DNI" },
@@ -19,34 +19,13 @@ const BOTTOM_BADGES = [
 
 export default function MFAPaso3WebAuthn() {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
 
   const handleWebAuthnValidation = async () => {
 
-    const token = localStorage.getItem("token");
-    const dniValid = localStorage.getItem("dni_barcode_valid");
-    const faceValid = localStorage.getItem("face_valid");
-    const voterId = localStorage.getItem("voter_id");
-
-    if (!token) {
-      alert("Debe iniciar sesión primero");
-      navigate("/login");
-      return;
-    }
-
-    if (dniValid !== "true") {
-      alert("Primero debe completar la validación del DNI");
-      navigate("/mfa/escaneo");
-      return;
-    }
-
-    if (faceValid !== "true") {
-      alert("Primero debe completar la validación facial");
-      navigate("/mfa/facial");
-      return;
-    }
 
     try {
 
@@ -64,17 +43,7 @@ export default function MFAPaso3WebAuthn() {
 
 
 
-      const optionsRes = await fetch(
-        `${API_URL}/webauthn/auth/options`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          }
-        }
-      );
-
-      const options = await optionsRes.json();
+      const options = await webauthnAuthOptions();
 
       if (!options.success) {
         alert(options.error || "Error obteniendo challenge");
@@ -105,30 +74,16 @@ export default function MFAPaso3WebAuthn() {
 
 
       const payload = {
-        voter_id: voterId,
+        voter_id: sessionStorage.getItem("voter_id"),
         id: credential.id
       };
 
-      const verifyRes = await fetch(
-        `${API_URL}/webauthn/auth/verify`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
-        }
-      );
+      const result = await webauthnAuthVerify(payload);
 
-      const result = await verifyRes.json();
-
-      if (!verifyRes.ok || !result.success) {
+      if (!result.success) {
         alert(result.error || "Error validando WebAuthn");
         return;
       }
-
-
-      localStorage.setItem("fingerprint_valid", "true");
 
       setStatusMessage(
         "Validación multifactor completada correctamente"
@@ -159,6 +114,9 @@ export default function MFAPaso3WebAuthn() {
         <nav className="mfa3-nav">
           <span className="mfa3-logo">NEXA VOTE</span>
           <div className="mfa3-nav-right">
+            <button className="theme-toggle" onClick={toggleTheme}>
+              <span className="material-symbols-outlined">{theme === "light" ? "dark_mode" : "light_mode"}</span>
+            </button>
             <span className="material-symbols-outlined mfa3-nav-icon">security</span>
             <button className="mfa3-btn-secure">Secure Login</button>
           </div>

@@ -1,11 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { useRegistration } from "../../context/useRegistration";
+import { useTheme } from "../../context/ThemeContext";
 import { useState } from "react";
 import "../../css/registro/RegistroBiometrico.css";
-import API_URL from "../../config/api";
+import { webauthnRegisterOptions, webauthnRegisterVerify } from "../../services/api";
 
 const RegistroBiometrico = () => {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const { registrationId } = useRegistration();
 
   const [registrado, setRegistrado] = useState(false);
@@ -23,13 +25,7 @@ const RegistroBiometrico = () => {
       }
 
 
-      const optionsRes = await fetch(`${API_URL}/webauthn/register/options`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ voter_id: registrationId })
-      });
-
-      const options = await optionsRes.json();
+      const options = await webauthnRegisterOptions(registrationId);
 
       if (!options.success) {
         setMensaje(options.error || "Error obteniendo challenge");
@@ -85,15 +81,9 @@ const RegistroBiometrico = () => {
         voter_id: registrationId
       };
 
-      const verifyRes = await fetch(`${API_URL}/webauthn/register/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      const result = await webauthnRegisterVerify(payload);
 
-      const result = await verifyRes.json();
-
-      if (!verifyRes.ok || !result.success) {
+      if (!result.success) {
         setMensaje(result.error || "Error verificando WebAuthn");
         return;
       }
@@ -121,8 +111,11 @@ const RegistroBiometrico = () => {
       <header className="rb-navbar">
         <h2 className="rb-logo">NEXA VOTE</h2>
         <div className="rb-nav-icons">
-          <span>🔒</span>
-          <span>🛡️</span>
+          <button className="theme-toggle" onClick={toggleTheme}>
+            <span className="material-symbols-outlined">{theme === "light" ? "dark_mode" : "light_mode"}</span>
+          </button>
+          <span className="material-symbols-outlined">lock</span>
+          <span className="material-symbols-outlined">verified_user</span>
         </div>
       </header>
 
@@ -132,7 +125,7 @@ const RegistroBiometrico = () => {
           <p className="rb-subtitle">Vincule su huella o llave de seguridad para continuar</p>
 
           <div className="rb-fingerprint-circle">
-            <span className="rb-fingerprint-icon">🌀</span>
+            <span className="material-symbols-outlined rb-fingerprint-icon">fingerprint</span>
           </div>
 
           <div className="rb-badges">

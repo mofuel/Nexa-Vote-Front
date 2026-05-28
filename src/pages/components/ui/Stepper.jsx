@@ -10,7 +10,6 @@ export default function Stepper({ steps, currentStep }) {
                         flex: i < steps.length - 1 ? 1 : 'unset'
                     }}
                 >
-                    {/* STEP ITEM */}
                     <div style={{
                         display: 'flex',
                         flexDirection: 'column',
@@ -28,22 +27,21 @@ export default function Stepper({ steps, currentStep }) {
                             fontFamily: 'Space Grotesk, sans-serif',
                             fontWeight: 700,
 
-                            // 🔥 MISMO ESTILO EXACTO
                             ...(step.n === currentStep
                                 ? {
-                                    background: '#6c47ff',
-                                    color: '#fff',
+                                    background: 'var(--accent)',
+                                    color: 'var(--text-on-accent)',
                                     boxShadow: '0 0 0 4px rgba(108,71,255,0.2)'
                                 }
                                 : step.n < currentStep
                                     ? {
                                         background: 'rgba(65,238,194,0.15)',
-                                        color: '#41eec2',
-                                        border: '2px solid #41eec2'
+                                        color: 'var(--color-icon-teal)',
+                                        border: '2px solid var(--color-icon-teal)'
                                     }
                                     : {
-                                        border: '2px solid rgba(255,255,255,0.2)',
-                                        color: '#c9c3d9',
+                                        border: '2px solid var(--border)',
+                                        color: 'var(--text-secondary)',
                                         opacity: 0.4
                                     }
                             ),
@@ -64,13 +62,12 @@ export default function Stepper({ steps, currentStep }) {
                             letterSpacing: '0.05em',
                             textAlign: 'center',
 
-                            // MISMA LÓGICA DE COLOR
                             color:
                                 step.n === currentStep
-                                    ? '#c9beff'
+                                    ? 'var(--text-accent)'
                                     : step.n < currentStep
-                                        ? '#41eec2'
-                                        : '#c9c3d9',
+                                        ? 'var(--color-icon-teal)'
+                                        : 'var(--text-secondary)',
 
                             opacity: step.n > currentStep ? 0.4 : 1,
                         }}>
@@ -78,7 +75,6 @@ export default function Stepper({ steps, currentStep }) {
                         </span>
                     </div>
 
-                    {/* LINEA */}
                     {i < steps.length - 1 && (
                         <div
                             style={{
@@ -88,7 +84,7 @@ export default function Stepper({ steps, currentStep }) {
                                 background:
                                     step.n < currentStep
                                         ? 'rgba(65,238,194,0.4)'
-                                        : 'rgba(255,255,255,0.1)',
+                                        : 'var(--border-light)',
                                 transition: 'background 0.4s',
                             }}
                         />

@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../../context/ThemeContext";
 import Footer from "../components/layout/footer/Footer";
 import { getCandidates, castVote } from "../../services/api";
 import "../../css/votante/Seleccioncandidato.css";
+import { useAuth } from "../../context/useAuth";
 
 const NAV_LINKS = ["Resultados", "Cédula", "Recursos"];
 const CARD_TAGS = ["CANDIDATO", "OFICIAL"];
 
 export default function SeleccionCandidato() {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
+  const { logout } = useAuth();
 
   const [candidates, setCandidates] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -39,13 +43,7 @@ export default function SeleccionCandidato() {
   }, []);
 
   const handleConfirmVote = async () => {
-    const token = localStorage.getItem("token");
 
-    if (!token) {
-      alert("Debe iniciar sesión primero");
-      navigate("/login");
-      return;
-    }
 
     if (!selected) {
       setMessage("Seleccione un candidato antes de confirmar");
@@ -56,7 +54,7 @@ export default function SeleccionCandidato() {
       setVoting(true);
       setMessage("");
 
-      const result = await castVote(token, selected);
+      const result = await castVote(selected);
 
       if (!result.success) {
         setMessage(result.message || "No se pudo registrar el voto");
@@ -93,12 +91,18 @@ export default function SeleccionCandidato() {
               ))}
             </div>
 
+            <button className="theme-toggle" onClick={toggleTheme}>
+              <span className="material-symbols-outlined">{theme === "light" ? "dark_mode" : "light_mode"}</span>
+            </button>
+
             <div className="sc-verified-pill">
               <span className="material-symbols-outlined">verified_user</span>
               <span className="sc-verified-text">ID VERIFIED</span>
             </div>
 
-            <span className="material-symbols-outlined sc-lock-icon">lock</span>
+            <button onClick={() => { logout(); navigate("/login"); }} className="sc-logout-btn">
+              <span className="material-symbols-outlined">logout</span>
+            </button>
           </div>
         </div>
       </header>

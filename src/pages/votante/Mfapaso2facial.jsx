@@ -2,10 +2,11 @@ import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as faceapi from "face-api.js";
 import { toast } from "sonner";
+import { useTheme } from "../../context/ThemeContext";
 import Footer from "../components/layout/footer/Footer";
-import API_URL from "../../config/api";
 import MFAStepper from "../components/ui/Mfastepper";
 import "../../css/votante/Mfapaso2facial.css";
+import { validateFace } from "../../services/api";
 
 
 const isFaceFrontal = (landmarks) => {
@@ -44,8 +45,9 @@ const isFaceVertical = (landmarks) => {
 
 
 export default function MFAPaso2Facial() {
-  const navigate  = useNavigate();
-  const videoRef  = useRef(null);
+  const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
+  const videoRef = useRef(null);
 
   const [phase, setPhase]               = useState("idle");
   const [message, setMessage]           = useState("Presiona Iniciar para comenzar");
@@ -207,22 +209,9 @@ export default function MFAPaso2Facial() {
       setPhase("validating");
       setMessage("Validando identidad...");
 
-      const token = localStorage.getItem("token");
+      const data = await validateFace(Array.from(descriptor));
 
-      const response = await fetch(`${API_URL}/api/mfa/validate-face`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          descriptor: Array.from(descriptor),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         setPhase("error");
         setMessage(data.error || "Rostro no coincide");
         toast.error(data.error || "Validación facial fallida");
@@ -231,8 +220,6 @@ export default function MFAPaso2Facial() {
 
       setPhase("success");
       setMessage("Identidad verificada ✓");
-
-      localStorage.setItem("face_valid", "true");
 
       toast.success("Rostro validado correctamente");
 
@@ -248,20 +235,6 @@ export default function MFAPaso2Facial() {
   };
 
   const handleIniciar = async () => {
-    const token    = localStorage.getItem("token");
-    const dniValid = localStorage.getItem("dni_barcode_valid");
-
-    if (!token) {
-      toast.error("Debe iniciar sesión primero");
-      navigate("/login");
-      return;
-    }
-
-    if (dniValid !== "true") {
-      toast.error("Primero debe completar la validación del DNI");
-      navigate("/mfa/escaneo");
-      return;
-    }
 
     try {
       setPhase("loading_models");
@@ -306,6 +279,9 @@ export default function MFAPaso2Facial() {
         <nav className="mfa2-nav">
           <span className="mfa2-logo">NEXA VOTE</span>
           <div className="mfa2-nav-right">
+            <button className="theme-toggle" onClick={toggleTheme}>
+              <span className="material-symbols-outlined">{theme === "light" ? "dark_mode" : "light_mode"}</span>
+            </button>
             <span className="material-symbols-outlined mfa2-nav-icon">security</span>
             <button className="mfa2-btn-secure">Secure Login</button>
           </div>

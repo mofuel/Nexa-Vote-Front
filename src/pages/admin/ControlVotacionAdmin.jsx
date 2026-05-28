@@ -4,9 +4,9 @@ import AdminHeader from '../components/layout/header/AdminHeader'
 import Footer from '../components/layout/footer/AdminFooter'
 
 const glassPanel = {
-  background: 'rgba(19, 22, 42, 0.8)',
+  background: 'var(--bg-glass)',
   backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
+  border: '1px solid var(--border)',
 }
 
 export default function ControlVotacionAdmin() {
@@ -14,7 +14,7 @@ export default function ControlVotacionAdmin() {
   const [votingOpen, setVotingOpen] = useState(true)
 
   return (
-    <div style={{ display: 'flex', background: '#14121c', color: '#e6e0ef', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ display: 'flex', background: 'var(--bg-page)', color: 'var(--text-primary)', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
 
       <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 

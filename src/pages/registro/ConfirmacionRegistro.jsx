@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../../lib/supabaseClient";
+import { useTheme } from "../../context/ThemeContext";
+import { getRegistrationSummary, completeRegistration } from "../../services/api";
 import { useRegistration } from "../../context/useRegistration";
 import Stepper from "../components/ui/Stepper";
 import "../../css/registro/ConfirmacionRegistro.css";
@@ -14,6 +15,7 @@ const steps = [
 
 export default function ConfirmacionRegistro() {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const { registrationId } = useRegistration();
 
   const [data, setData] = useState(null);
@@ -22,63 +24,25 @@ export default function ConfirmacionRegistro() {
   useEffect(() => {
     const fetchData = async () => {
       if (!registrationId) return;
-
-      const { data: voter, error: voterError } = await supabase
-        .from("voters")
-        .select("*")
-        .eq("id", registrationId)
-        .single();
-
-      if (voterError) {
-        console.log(voterError);
-        setLoading(false);
-        return;
-      }
-
-      const { data: bio } = await supabase
-        .from("biometric_data")
-        .select("face_embedding")
-        .eq("voter_id", registrationId)
-        .maybeSingle();
-
-      const { data: webauthn } = await supabase
-        .from("webauthn_credentials")
-        .select("credential_id")
-        .eq("voter_id", registrationId)
-        .maybeSingle();
-
-      const { data: status } = await supabase
-        .from("registration_status")
-        .select("current_step, status")
-        .eq("voter_id", registrationId)
-        .single();
-
-      setData({
-        ...voter,
-        biometric_data: bio,
-        webauthn_credentials: webauthn,
-        registration_status: status,
-      });
-
+      const data = await getRegistrationSummary(registrationId);
+      if (!data.success) return;
+      setData(data.data);
       setLoading(false);
     };
-
     fetchData();
   }, [registrationId]);
 
-  const faceOk = !!data?.biometric_data?.face_embedding;
-  const bioOk = !!data?.webauthn_credentials?.credential_id;
+
+  const faceOk = data?.face_registered;
+  const bioOk = data?.webauthn_registered;
 
   const finishRegistration = async () => {
-    const { error } = await supabase
-      .from("registration_status")
-      .update({ current_step: 4, status: "completed", completed_at: new Date() })
-      .eq("voter_id", registrationId);
-
-    if (error) { console.log(error); return; }
-
+    const result = await completeRegistration(registrationId);
+    if (!result.success) { console.log(result.error); return; }
     navigate("/");
   };
+
+
 
   if (loading) {
     return <div className="cr-loading">Cargando...</div>;
@@ -93,6 +57,9 @@ export default function ConfirmacionRegistro() {
             NEXA VOTE
           </span>
           <div className="cr-nav-icons">
+            <button className="theme-toggle" onClick={toggleTheme}>
+              <span className="material-symbols-outlined">{theme === "light" ? "dark_mode" : "light_mode"}</span>
+            </button>
             <span className="material-symbols-outlined cr-nav-icon">lock</span>
             <span className="material-symbols-outlined cr-nav-icon">verified_user</span>
           </div>

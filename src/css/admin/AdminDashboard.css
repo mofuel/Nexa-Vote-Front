@@ -1,14 +1,11 @@
-/* AdminDashboard.css */
-
 .ad-layout {
-  background: #14121c;
-  color: #e6e0ef;
+  background: var(--bg-page);
+  color: var(--text-primary);
   min-height: 100vh;
-  font-family: Inter, sans-serif;
+  font-family: var(--font-body);
   flex-direction: row;
 }
 
-/* ── Main ── */
 .ad-main {
   flex: 1;
   display: flex;
@@ -16,8 +13,6 @@
   margin-left: 0;
 }
 
-
-/* SIDEBAR fijo */
 .ad-sidebar {
   position: fixed;
   left: 0;
@@ -37,39 +32,38 @@
   box-sizing: border-box;
 }
 
-/* ── Glass Panel (shared base) ── */
 .ad-glass {
-  background: rgba(19, 22, 42, 0.6);
+  background: var(--bg-glass);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
 }
 
-/* ── Stats Row ── */
 .ad-stats-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 24px;
 }
 
-/* Voting Status card */
 .ad-stat-card {
   padding: 24px;
   border-radius: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
 }
 
 .ad-stat-label {
   font-size: 11px;
-  color: #c9c3d9;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin: 0 0 4px;
 }
 
 .ad-stat-title {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: 18px;
   margin: 0;
@@ -79,7 +73,7 @@
   width: 48px;
   height: 24px;
   border-radius: 999px;
-  background: #41eec2;
+  background: var(--color-icon-teal);
   position: relative;
   cursor: pointer;
   flex-shrink: 0;
@@ -92,16 +86,17 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--text-inverse);
 }
 
-/* Votes card */
 .ad-votes-card {
   padding: 24px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 16px;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
 }
 
 .ad-votes-icon-wrap {
@@ -116,31 +111,31 @@
 }
 
 .ad-votes-icon-wrap .material-symbols-outlined {
-  color: #c9beff;
+  color: var(--color-icon-accent);
   font-size: 28px;
 }
 
 .ad-votes-value {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: 22px;
   margin: 0;
 }
 
-/* ── Results + Chart row ── */
 .ad-results-row {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 24px;
 }
 
-/* Results section */
 .ad-results {
   padding: 24px;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
 }
 
 .ad-results-header {
@@ -152,25 +147,25 @@
 }
 
 .ad-results-title {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: 20px;
   margin: 0 0 4px;
 }
 
 .ad-results-subtitle {
-  color: #c9c3d9;
+  color: var(--text-secondary);
   font-size: 14px;
   margin: 0;
 }
 
 .ad-results-refresh {
   font-size: 11px;
-  color: #c9c3d9;
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  background: var(--bg-hover);
   padding: 4px 8px;
   border-radius: 6px;
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
 }
 
 .ad-candidate-list {
@@ -197,7 +192,7 @@
 
 .ad-bar-track {
   height: 16px;
-  background: #201e29;
+  background: var(--bg-badge);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -208,13 +203,13 @@
 }
 
 .ad-results-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--border);
   padding-top: 16px;
   text-align: right;
 }
 
 .ad-btn-analytics {
-  color: #c9beff;
+  color: var(--text-accent);
   background: none;
   border: none;
   cursor: pointer;
@@ -230,17 +225,18 @@
   font-size: 16px;
 }
 
-/* Turnout section */
 .ad-turnout {
   padding: 24px;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
 }
 
 .ad-turnout-title {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: 20px;
   width: 100%;
@@ -248,7 +244,7 @@
 }
 
 .ad-turnout-subtitle {
-  color: #c9c3d9;
+  color: var(--text-secondary);
   font-size: 14px;
   width: 100%;
   margin: 0 0 24px;
@@ -279,14 +275,14 @@
 }
 
 .ad-donut-pct {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: 32px;
   line-height: 1;
 }
 
 .ad-donut-status {
-  color: #41eec2;
+  color: var(--color-icon-teal);
   font-size: 11px;
   letter-spacing: 0.1em;
 }
@@ -294,7 +290,7 @@
 .ad-turnout-total {
   margin-top: 24px;
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
   border-radius: 12px;
   padding: 16px;
   display: flex;
@@ -304,26 +300,27 @@
 
 .ad-turnout-total-label {
   font-size: 10px;
-  color: #c9c3d9;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 
 .ad-turnout-total-value {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: 13px;
 }
 
-/* ── Audit Log ── */
 .ad-audit {
   border-radius: 12px;
   overflow: hidden;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
 }
 
 .ad-audit-header {
   padding: 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -332,14 +329,14 @@
 }
 
 .ad-audit-title {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: 20px;
   margin: 0 0 4px;
 }
 
 .ad-audit-subtitle {
-  color: #c9c3d9;
+  color: var(--text-secondary);
   font-size: 14px;
   margin: 0;
 }
@@ -351,10 +348,10 @@
 
 .ad-btn-action {
   padding: 8px 16px;
-  background: #201e29;
+  background: var(--bg-badge);
   border: none;
   border-radius: 8px;
-  color: #c9c3d9;
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
@@ -372,22 +369,22 @@
 }
 
 .ad-table thead tr {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
 }
 
 .ad-table th {
   padding: 16px 24px;
   text-align: left;
   font-size: 11px;
-  color: #c9c3d9;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
 }
 
 .ad-table tbody tr {
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--border);
 }
 
 .ad-table td {
@@ -396,14 +393,14 @@
 
 .ad-td-time {
   font-size: 12px;
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   letter-spacing: 0.1em;
 }
 
 .ad-td-action {
   font-size: 14px;
   font-weight: 700;
-  color: #c9beff;
+  color: var(--text-accent);
 }
 
 .ad-td-validator {
@@ -432,7 +429,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #41eec2;
+  background: var(--color-icon-teal);
   flex-shrink: 0;
 }
 
@@ -442,12 +439,12 @@
 
 .ad-audit-footer {
   padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-hover);
   text-align: center;
 }
 
 .ad-btn-view-all {
-  color: #c9beff;
+  color: var(--text-accent);
   background: none;
   border: none;
   cursor: pointer;

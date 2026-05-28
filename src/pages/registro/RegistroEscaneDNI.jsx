@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { BrowserPDF417Reader } from "@zxing/browser";
 import { toast } from "sonner";
 import { useRegistration } from "../../context/useRegistration";
+import { useTheme } from "../../context/ThemeContext";
 import Footer from "../components/layout/footer/Footer";
-import API_URL from "../../config/api";
+import { scanIdentity } from "../../services/api";
 import "../../css/registro/Registroidentidad.css";
 
 
@@ -70,6 +71,7 @@ const preprocessImage = (imageUrl, filtro) => {
 
 export default function RegistroEscaneDNI() {
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
     const { setRegistrationId } = useRegistration();
 
     const [loading, setLoading] = useState(false);
@@ -131,18 +133,9 @@ export default function RegistroEscaneDNI() {
         setEstado("Registrando datos...");
 
         try {
-            const response = await fetch(`${API_URL}/register/identity/scan`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    dni: datosLeidos.dni,
-                    full_name: datosLeidos.full_name,
-                }),
-            });
+            const result = await scanIdentity(datosLeidos.dni, datosLeidos.full_name);
 
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
+            if (!result.success) {
                 toast.error(result.error || "Error al registrar");
                 return;
             }
@@ -167,6 +160,9 @@ export default function RegistroEscaneDNI() {
                 <nav className="ri-nav">
                     <span className="ri-logo">NEXA VOTE</span>
                     <div className="ri-nav-icons">
+                        <button className="theme-toggle" onClick={toggleTheme}>
+                          <span className="material-symbols-outlined">{theme === "light" ? "dark_mode" : "light_mode"}</span>
+                        </button>
                         <span className="material-symbols-outlined ri-nav-icon">id_card</span>
                     </div>
                 </nav>
@@ -241,17 +237,12 @@ export default function RegistroEscaneDNI() {
                     )}
 
                     {/* Botones */}
-                    <div className="ri-form-grid" style={{ marginTop: "24px" }}>
+                    <div className="ri-actions-row">
 
                         <label
                             className="ri-btn-submit"
-                            style={{
-                                textAlign: "center", cursor: loading ? "not-allowed" : "pointer",
-                                opacity: loading ? 0.6 : 1, display: "block"
-                            }}
                         >
-                            <span className="material-symbols-outlined"
-                                style={{ verticalAlign: "middle", marginRight: "8px", fontSize: "18px" }}>
+                            <span className="material-symbols-outlined">
                                 {loading ? "hourglass_top" : "camera"}
                             </span>
                             {loading ? estado || "Procesando..." : preview ? "Cambiar foto" : "Fotografiar DNI"}
@@ -267,16 +258,14 @@ export default function RegistroEscaneDNI() {
 
                         {datosLeidos && (
                             <button
-                                className="ri-btn-submit"
+                                className="ri-btn-submit ri-btn-success"
                                 onClick={handleContinuar}
                                 disabled={loading}
-                                style={{ background: "#22c55e" }}
                             >
-                                <span className="material-symbols-outlined"
-                                    style={{ verticalAlign: "middle", marginRight: "8px", fontSize: "18px" }}>
+                                <span className="material-symbols-outlined">
                                     arrow_forward
                                 </span>
-                                Continuar con estos datos
+                                Continuar
                             </button>
                         )}
 

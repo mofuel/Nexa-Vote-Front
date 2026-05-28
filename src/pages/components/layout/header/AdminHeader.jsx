@@ -1,22 +1,26 @@
+import { useTheme } from "../../../../context/ThemeContext";
+
 export default function AdminHeader({ onMenuClick }) {
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <header style={{
       position: 'sticky', top: 0, width: '100%', zIndex: 40,
-      background: 'rgba(20,18,28,0.8)', backdropFilter: 'blur(20px)',
-      borderBottom: '1px solid rgba(255,255,255,0.1)',
+      background: 'var(--bg-glass)', backdropFilter: 'blur(20px)',
+      borderBottom: '1px solid var(--border-light)',
       height: '64px', display: 'flex', alignItems: 'center',
       justifyContent: 'space-between', padding: '0 40px',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         <button
           onClick={onMenuClick}
-          style={{ background: 'none', border: 'none', color: '#c9beff', cursor: 'pointer', padding: '8px' }}
+          style={{ background: 'none', border: 'none', color: 'var(--text-accent)', cursor: 'pointer', padding: '8px' }}
         >
           <span className="material-symbols-outlined">menu</span>
         </button>
         <h1 style={{
           fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700,
-          fontSize: '20px', color: '#c9beff', letterSpacing: '0.15em',
+          fontSize: '20px', color: 'var(--text-accent)', letterSpacing: '0.15em',
           textTransform: 'uppercase',
         }}>
           NEXA VOTE
@@ -27,9 +31,9 @@ export default function AdminHeader({ onMenuClick }) {
         <div style={{ display: 'flex', gap: '24px' }}>
           {['Overview', 'Regions', 'Security'].map((item, i) => (
             <span key={item} style={{
-              color: i === 0 ? '#c9beff' : '#c9c3d9',
+              color: i === 0 ? 'var(--text-accent)' : 'var(--text-secondary)',
               fontWeight: i === 0 ? 700 : 400,
-              borderBottom: i === 0 ? '2px solid #c9beff' : 'none',
+              borderBottom: i === 0 ? '2px solid var(--text-accent)' : 'none',
               paddingBottom: i === 0 ? '4px' : '0',
               cursor: 'pointer', fontSize: '15px',
             }}>
@@ -37,9 +41,12 @@ export default function AdminHeader({ onMenuClick }) {
             </span>
           ))}
         </div>
+        <button className="theme-toggle" onClick={toggleTheme} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-accent)' }}>
+          <span className="material-symbols-outlined">{theme === "light" ? "dark_mode" : "light_mode"}</span>
+        </button>
         <div style={{
           width: '32px', height: '32px', borderRadius: '50%',
-          background: '#36333e', border: '1px solid rgba(255,255,255,0.1)',
+          background: '#36333e', border: '1px solid var(--border)',
           overflow: 'hidden',
         }}>
           <img

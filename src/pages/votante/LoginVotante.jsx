@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginVoter } from "../../services/api";
+import { useTheme } from "../../context/ThemeContext";
 import "../../css/votante/LoginVotante.css";
+import { useAuth } from "../../context/useAuth";
 
 const SECURITY_BADGES = [
   { icon: "shield_lock", label: "Standard", value: "AES-256" },
@@ -10,6 +12,8 @@ const SECURITY_BADGES = [
 
 export default function LoginVotante() {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
+  const { login } = useAuth();
 
   const [dni, setDni] = useState("");
   const [password, setPassword] = useState("");
@@ -41,9 +45,7 @@ export default function LoginVotante() {
         return;
       }
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("voter_id", user.id);
-      localStorage.setItem("voter", JSON.stringify(user));
+      login(token, user, "voter");
 
       navigate("/mfa/escaneo");
 
@@ -64,6 +66,9 @@ export default function LoginVotante() {
             NEXA VOTE
           </span>
           <div className="lv-nav-icons">
+            <button className="theme-toggle" onClick={toggleTheme}>
+              <span className="material-symbols-outlined">{theme === "light" ? "dark_mode" : "light_mode"}</span>
+            </button>
             <span className="material-symbols-outlined lv-nav-icon">lock</span>
             <span className="material-symbols-outlined lv-nav-icon">verified_user</span>
           </div>

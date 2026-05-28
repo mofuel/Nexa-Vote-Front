@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../../context/ThemeContext";
 import "../../css/admin/LoginAdmin.css";
 import { loginAdmin } from "../../services/api";
+import { useAuth } from "../../context/useAuth";
 
 const SECONDARY_LINKS = ["Soporte IT", "Protocolos", "Verificar Nodo"];
 const FOOTER_LINKS = ["Privacy Policy", "Security Protocol", "Audit Status"];
@@ -13,10 +15,12 @@ const SECURITY_BADGES = [
 
 export default function LoginAdmin() {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const [credentials, setCredentials] = useState({
     email: "",
     password: ""
   });
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
@@ -37,8 +41,7 @@ export default function LoginAdmin() {
         return;
       }
 
-      localStorage.setItem("admin_token", result.data.token);
-      localStorage.setItem("admin", JSON.stringify(result.data.admin));
+      login(result.data.token, result.data.admin, "admin");
 
       navigate("/admin/dashboard");
 
@@ -62,6 +65,9 @@ export default function LoginAdmin() {
           </div>
 
           <div className="la-nav-icons">
+            <button className="theme-toggle" onClick={toggleTheme}>
+              <span className="material-symbols-outlined">{theme === "light" ? "dark_mode" : "light_mode"}</span>
+            </button>
             <span className="material-symbols-outlined la-nav-icon">lock</span>
             <span className="material-symbols-outlined la-nav-icon">verified_user</span>
           </div>

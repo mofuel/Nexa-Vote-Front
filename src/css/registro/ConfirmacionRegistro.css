@@ -1,28 +1,25 @@
-/* ConfirmacionRegistro.css */
-
 .cr-page {
-  background: #14121c;
-  color: #e6e0ef;
+  background: var(--bg-page);
+  color: var(--text-primary);
   min-height: 100vh;
-  font-family: Inter, sans-serif;
+  font-family: var(--font-body);
   display: flex;
   flex-direction: column;
 }
 
 .cr-loading {
-  color: #fff;
+  color: var(--text-primary);
   padding: 40px;
 }
 
-/* ── Header ── */
 .cr-header {
   position: fixed;
   top: 0;
   width: 100%;
   z-index: 50;
-  background: rgba(20, 18, 28, 0.8);
+  background: var(--bg-glass);
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-light);
   height: 64px;
   display: flex;
   align-items: center;
@@ -40,23 +37,23 @@
 }
 
 .cr-logo {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: 20px;
-  color: #c9beff;
+  color: var(--text-accent);
   cursor: pointer;
 }
 
 .cr-nav-icons {
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 .cr-nav-icon {
-  color: #41eec2;
+  color: var(--color-icon-teal);
 }
 
-/* ── Main ── */
 .cr-main {
   padding-top: 96px;
   padding-bottom: 48px;
@@ -72,30 +69,28 @@
   gap: 32px;
 }
 
-/* ── Page Title ── */
 .cr-page-title {
   text-align: center;
 }
 
 .cr-page-title h1 {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: 28px;
-  color: #fff;
+  color: var(--text-primary);
   margin: 0 0 8px;
 }
 
 .cr-page-title p {
-  color: #c9c3d9;
+  color: var(--text-secondary);
   font-size: 16px;
   margin: 0;
 }
 
-/* ── Glass Card ── */
 .cr-card {
-  background: rgba(19, 22, 42, 0.8);
+  background: var(--bg-glass);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 32px;
   display: flex;
@@ -103,12 +98,11 @@
   gap: 32px;
 }
 
-/* ── Profile Row ── */
 .cr-profile {
   display: flex;
   gap: 24px;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border);
   padding-bottom: 24px;
 }
 
@@ -117,7 +111,7 @@
   height: 100px;
   border-radius: 12px;
   overflow: hidden;
-  border: 2px solid #6c47ff;
+  border: 2px solid var(--accent);
   flex-shrink: 0;
 }
 
@@ -145,30 +139,29 @@
 }
 
 .cr-verified-badge .material-symbols-outlined {
-  color: #41eec2;
+  color: var(--color-icon-success);
   font-size: 18px;
 }
 
 .cr-verified-badge span:last-child {
   font-size: 10px;
-  color: #41eec2;
+  color: var(--color-icon-success);
   font-weight: 700;
 }
 
 .cr-profile-name {
   font-size: 22px;
   font-weight: 700;
-  color: #c9beff;
+  color: var(--text-accent);
   margin: 6px 0 0;
 }
 
 .cr-profile-email {
   font-size: 14px;
-  color: #c9c3d9;
+  color: var(--text-secondary);
   margin: 0;
 }
 
-/* ── Data Grid ── */
 .cr-data-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -176,7 +169,7 @@
 }
 
 .cr-data-item {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-hover);
   padding: 16px;
   border-radius: 12px;
 }
@@ -185,12 +178,12 @@
   display: block;
   font-size: 10px;
   text-transform: uppercase;
-  color: #c9c3d9;
+  color: var(--text-secondary);
   margin-bottom: 6px;
 }
 
 .cr-data-value {
-  color: #e6e0ef;
+  color: var(--text-primary);
 }
 
 .cr-data-status {
@@ -200,10 +193,9 @@
 }
 
 .cr-check-icon {
-  color: #41eec2;
+  color: var(--color-icon-success);
 }
 
-/* ── Buttons ── */
 .cr-actions {
   display: flex;
   justify-content: space-between;
@@ -212,10 +204,10 @@
 .cr-btn-edit {
   padding: 14px 32px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
   background: transparent;
-  color: #c9c3d9;
-  font-family: "Space Grotesk", sans-serif;
+  color: var(--text-secondary);
+  font-family: var(--font-display);
   font-size: 15px;
   cursor: pointer;
   transition: border-color 0.2s;
@@ -229,8 +221,8 @@
   padding: 14px 48px;
   border-radius: 999px;
   border: none;
-  background: #6c47ff;
-  color: #fff;
+  background: var(--accent);
+  color: var(--text-on-accent);
   font-size: 15px;
   font-weight: 700;
   font-family: inherit;
@@ -241,4 +233,91 @@
 .cr-btn-finish:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .cr-nav {
+    padding: 0 20px;
+  }
+
+  .cr-content {
+    padding: 0 16px;
+    gap: 24px;
+  }
+
+  .cr-card {
+    padding: 24px;
+    gap: 24px;
+  }
+
+  .cr-page-title h1 {
+    font-size: 24px;
+  }
+
+  .cr-data-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cr-profile {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .cr-verified-badge {
+    margin: 0 auto;
+  }
+
+  .cr-avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .cr-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .cr-btn-edit,
+  .cr-btn-finish {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .cr-header {
+    height: 56px;
+  }
+
+  .cr-nav {
+    padding: 0 14px;
+  }
+
+  .cr-main {
+    padding-top: 80px;
+    padding-bottom: 32px;
+  }
+
+  .cr-card {
+    padding: 20px 16px;
+    border-radius: 14px;
+    gap: 20px;
+  }
+
+  .cr-page-title h1 {
+    font-size: 20px;
+  }
+
+  .cr-page-title p {
+    font-size: 14px;
+  }
+
+  .cr-profile-name {
+    font-size: 18px;
+  }
+
+  .cr-data-item {
+    padding: 12px;
+  }
 }

@@ -1,25 +1,22 @@
-/* LoginAdmin.css */
-
 .la-page {
-  background-color: #0a0c14;
-  background-image: radial-gradient(rgba(108, 71, 255, 0.05) 1px, transparent 1px);
+  background-color: var(--bg-elevated);
+  background-image: radial-gradient(var(--accent-glow) 1px, transparent 1px);
   background-size: 32px 32px;
   min-height: 100vh;
-  color: #e6e0ef;
-  font-family: Inter, sans-serif;
+  color: var(--text-primary);
+  font-family: var(--font-body);
   display: flex;
   flex-direction: column;
 }
 
-/* ── Header ── */
 .la-header {
   position: fixed;
   top: 0;
   width: 100%;
   z-index: 50;
-  background: rgba(20, 18, 28, 0.8);
+  background: var(--bg-glass);
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-light);
   height: 64px;
 }
 
@@ -41,10 +38,10 @@
 }
 
 .la-logo {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: 20px;
-  color: #c9beff;
+  color: var(--text-accent);
   letter-spacing: 0.15em;
   cursor: pointer;
 }
@@ -52,13 +49,13 @@
 .la-nav-divider {
   height: 24px;
   width: 1px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--border);
 }
 
 .la-nav-subtitle {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-size: 10px;
-  color: #c9c3d9;
+  color: var(--text-secondary);
   letter-spacing: 0.2em;
   text-transform: uppercase;
 }
@@ -66,13 +63,13 @@
 .la-nav-icons {
   display: flex;
   gap: 12px;
+  align-items: center;
 }
 
 .la-nav-icon {
-  color: #c9beff;
+  color: var(--text-accent);
 }
 
-/* ── Main ── */
 .la-main {
   flex-grow: 1;
   display: flex;
@@ -86,7 +83,6 @@
   max-width: 480px;
 }
 
-/* ── Access Header ── */
 .la-access-header {
   display: flex;
   flex-direction: column;
@@ -103,37 +99,36 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 16px;
-  border: 1px solid rgba(201, 190, 255, 0.2);
+  border: 1px solid var(--border);
 }
 
 .la-icon-circle .material-symbols-outlined {
-  color: #c9beff;
+  color: var(--color-icon-accent);
   font-size: 32px;
 }
 
 .la-access-title {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-size: 28px;
   font-weight: 600;
   text-align: center;
-  color: #fff;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .la-access-subtitle {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-display);
   font-size: 10px;
-  color: #c9c3d9;
+  color: var(--text-secondary);
   margin-top: 8px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
 }
 
-/* ── Form Card ── */
 .la-card {
-  background: rgba(19, 22, 42, 0.8);
+  background: var(--bg-glass);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 32px;
   position: relative;
@@ -146,10 +141,9 @@
   left: 0;
   width: 100%;
   height: 4px;
-  background: #c9beff;
+  background: var(--text-accent);
 }
 
-/* ── Form ── */
 .la-form {
   display: flex;
   flex-direction: column;
@@ -164,7 +158,7 @@
 
 .la-label {
   font-size: 14px;
-  color: #c9c3d9;
+  color: var(--text-secondary);
   font-weight: 600;
 }
 
@@ -176,7 +170,7 @@
 
 .la-forgot-link {
   font-size: 10px;
-  color: #c9beff;
+  color: var(--text-accent);
   text-transform: uppercase;
   text-decoration: none;
 }
@@ -191,18 +185,18 @@
   top: 50%;
   transform: translateY(-50%);
   font-size: 20px;
-  color: #c9c3d9;
+  color: var(--text-secondary);
   pointer-events: none;
 }
 
 .la-input {
-  background: #13162a;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
   transition: border-color 0.3s ease;
   width: 100%;
   padding: 14px 16px 14px 48px;
   border-radius: 8px;
-  color: #fff;
+  color: var(--text-primary);
   outline: none;
   font-size: 14px;
   font-family: inherit;
@@ -210,13 +204,12 @@
 }
 
 .la-input:focus {
-  border-color: #c9beff;
+  border-color: var(--text-accent);
 }
 
-/* ── Submit ── */
 .la-btn-submit {
-  background: #6c47ff;
-  color: #fff;
+  background: var(--accent);
+  color: var(--text-on-accent);
   border: none;
   padding: 16px;
   border-radius: 8px;
@@ -236,11 +229,10 @@
   filter: brightness(1.1);
 }
 
-/* ── Security Badges ── */
 .la-security-badges {
   margin-top: 32px;
   padding-top: 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -251,26 +243,25 @@
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-hover);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
 }
 
 .la-security-badge .material-symbols-outlined {
   font-size: 18px;
 }
 
-.la-badge-icon--teal   { color: #41eec2; }
-.la-badge-icon--orange { color: #ffb691; }
+.la-badge-icon--teal   { color: var(--color-icon-teal); }
+.la-badge-icon--orange { color: var(--color-icon-orange); }
 
 .la-security-badge span:last-child {
   font-size: 10px;
-  color: #c9c3d9;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 
-/* ── Secondary Links ── */
 .la-secondary-links {
   display: flex;
   justify-content: center;
@@ -281,20 +272,19 @@
 
 .la-secondary-link {
   font-size: 11px;
-  color: #c9c3d9;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.15em;
   text-decoration: none;
 }
 
 .la-secondary-sep {
-  color: rgba(255, 255, 255, 0.1);
+  color: var(--border);
 }
 
-/* ── Footer ── */
 .la-footer {
-  background: #14121c;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--bg-page);
+  border-top: 1px solid var(--border);
   padding: 32px 40px;
 }
 
@@ -310,7 +300,7 @@
 
 .la-footer-copy {
   font-size: 10px;
-  color: #c9c3d9;
+  color: var(--text-secondary);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -321,7 +311,7 @@
 }
 
 .la-footer-link {
-  color: #c9c3d9;
+  color: var(--text-secondary);
   font-size: 11px;
   text-decoration: underline;
 }

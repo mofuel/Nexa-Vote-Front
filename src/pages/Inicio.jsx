@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { testConnection } from "../test/supabaseTest";
+import { useTheme } from "../context/ThemeContext";
 import "../css/Inicio.css";
 
 const FEATURE_CARDS = [
@@ -28,6 +29,7 @@ const FOOTER_LINKS = ["Privacy Policy", "Security Protocol", "Audit Status"];
 
 export default function Inicio() {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     testConnection();
@@ -47,6 +49,9 @@ export default function Inicio() {
               <span className="in-nav-link">Seguridad</span>
               <span className="in-nav-link">Transparencia</span>
             </div>
+            <button className="theme-toggle" onClick={toggleTheme}>
+              <span className="material-symbols-outlined">{theme === "light" ? "dark_mode" : "light_mode"}</span>
+            </button>
             <span className="material-symbols-outlined in-nav-icon">lock</span>
             <span className="material-symbols-outlined in-nav-icon">verified_user</span>
           </div>

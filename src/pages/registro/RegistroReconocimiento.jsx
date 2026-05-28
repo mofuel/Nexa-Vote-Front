@@ -3,9 +3,7 @@ import * as faceapi from "face-api.js";
 import { useRegistration } from "../../context/useRegistration";
 import { useNavigate } from "react-router-dom";
 import "../../css/registro/RegistroReconocimiento.css";
-import API_URL from "../../config/api";
-
-// ─── Helpers de calidad ───────────────────────────────────────────────────────
+import { registerFace } from "../../services/api";
 
 const isFaceFrontal = (landmarks) => {
   const leftEye  = landmarks.getLeftEye();
@@ -20,7 +18,6 @@ const isFaceFrontal = (landmarks) => {
   const horizontalOffset = Math.abs(noseTipX - eyesCenterX);
   const eyeDistance      = Math.abs(rightEyeX - leftEyeX);
 
-  // nariz no debe desviarse más del 25% de la distancia entre ojos
   return (horizontalOffset / eyeDistance) < 0.25;
 };
 
@@ -34,8 +31,6 @@ const isFaceVertical = (landmarks) => {
   const eyesCenterY = (leftEyeY + rightEyeY) / 2;
   const noseTipY    = nose[3].y;
 
-  // La nariz debe estar DEBAJO de los ojos (Y mayor en canvas)
-  // y no demasiado lejos (cabeza inclinada hacia abajo)
   const eyeDistance = Math.abs(
     landmarks.getRightEye().reduce((s, p) => s + p.x, 0) / rightEye.length -
     landmarks.getLeftEye().reduce((s, p)  => s + p.x, 0) / leftEye.length
@@ -43,27 +38,80 @@ const isFaceVertical = (landmarks) => {
 
   const verticalOffset = noseTipY - eyesCenterY;
 
-  // La nariz debe estar entre 0.5x y 2.5x la distancia ocular por debajo
   return verticalOffset > eyeDistance * 0.5 && verticalOffset < eyeDistance * 2.5;
 };
 
+function HeadSilhouette() {
+  return (
+    <svg viewBox="0 0 100 130" fill="none" xmlns="http://www.w3.org/2000/svg" className="rr-hologram-svg">
+      <ellipse cx="50" cy="45" rx="32" ry="38" stroke="rgba(34,211,238,0.9)" strokeWidth="2" fill="rgba(34,211,238,0.08)" />
+      <circle cx="35" cy="38" r="4" fill="rgba(34,211,238,0.6)" />
+      <circle cx="65" cy="38" r="4" fill="rgba(34,211,238,0.6)" />
+      <path d="M38 55 Q50 62 62 55" stroke="rgba(34,211,238,0.6)" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <ellipse cx="50" cy="90" rx="20" ry="25" stroke="rgba(34,211,238,0.4)" strokeWidth="1.5" fill="rgba(34,211,238,0.05)" />
+      <line x1="30" y1="118" x2="70" y2="118" stroke="rgba(34,211,238,0.3)" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ArrowLeft() {
+  return (
+    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="rr-hologram-svg">
+      <circle cx="40" cy="40" r="36" stroke="rgba(34,211,238,0.7)" strokeWidth="2" fill="rgba(34,211,238,0.05)" />
+      <path d="M50 20 L25 40 L50 60" stroke="rgba(34,211,238,0.9)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="30" cy="40" r="3" fill="rgba(34,211,238,0.9)" />
+      <ellipse cx="48" cy="28" rx="8" ry="10" stroke="rgba(34,211,238,0.3)" strokeWidth="1.5" fill="none" />
+    </svg>
+  );
+}
+
+function ArrowRight() {
+  return (
+    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="rr-hologram-svg">
+      <circle cx="40" cy="40" r="36" stroke="rgba(34,211,238,0.7)" strokeWidth="2" fill="rgba(34,211,238,0.05)" />
+      <path d="M30 20 L55 40 L30 60" stroke="rgba(34,211,238,0.9)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="50" cy="40" r="3" fill="rgba(34,211,238,0.9)" />
+      <ellipse cx="32" cy="28" rx="8" ry="10" stroke="rgba(34,211,238,0.3)" strokeWidth="1.5" fill="none" />
+    </svg>
+  );
+}
+
+function SmileFace() {
+  return (
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="rr-hologram-svg">
+      <circle cx="50" cy="50" r="42" stroke="rgba(34,211,238,0.7)" strokeWidth="2" fill="rgba(34,211,238,0.05)" />
+      <circle cx="32" cy="38" r="5" fill="rgba(34,211,238,0.8)" />
+      <circle cx="68" cy="38" r="5" fill="rgba(34,211,238,0.8)" />
+      <path d="M28 58 Q50 80 72 58" stroke="rgba(34,211,238,0.9)" strokeWidth="3" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="rr-hologram-svg">
+      <circle cx="40" cy="40" r="36" stroke="#22c55e" strokeWidth="2" fill="rgba(34,197,94,0.1)" />
+      <path d="M22 42 L35 55 L58 28" stroke="#22c55e" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  );
+}
 
 export default function RegistroReconocimiento() {
   const videoRef = useRef(null);
   const navigate = useNavigate();
   const { registrationId } = useRegistration();
 
-  const [message, setMessage]           = useState("Listo para iniciar");
-  const [loading, setLoading]           = useState(false);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
   const [livenessPassed, setLivenessPassed] = useState(false);
-  const [cameraOn, setCameraOn]         = useState(false);
+  const [cameraOn, setCameraOn] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
-  const [captureStep, setCaptureStep]   = useState(0);
-  const [faceSaved, setFaceSaved]       = useState(false);
+  const [captureStep, setCaptureStep] = useState(0);
+  const [faceSaved, setFaceSaved] = useState(false);
+  const [phase, setPhase] = useState("idle");
+  const [stepComplete, setStepComplete] = useState("");
 
-  const step           = useRef(0);
-  const stableCounter  = useRef(0);
-  const runningLiveness = useRef(false);
+  const livenessRef = useRef({ running: false, step: 0, stableCount: 0, timer: null, stepTimer: null });
 
   const loadModels = async () => {
     await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
@@ -72,6 +120,11 @@ export default function RegistroReconocimiento() {
     await faceapi.nets.faceExpressionNet.loadFromUri("/models");
   };
 
+  const stopLiveness = () => {
+    livenessRef.current.running = false;
+    if (livenessRef.current.timer) clearTimeout(livenessRef.current.timer);
+    if (livenessRef.current.stepTimer) clearTimeout(livenessRef.current.stepTimer);
+  };
 
   const startCamera = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -83,78 +136,112 @@ export default function RegistroReconocimiento() {
       setModelsLoaded(true);
     }
 
+    setPhase("idle");
     setMessage("Cámara activa");
   };
 
   const stopCamera = () => {
+    stopLiveness();
     const stream = videoRef.current?.srcObject;
     if (stream) {
       stream.getTracks().forEach((t) => t.stop());
       videoRef.current.srcObject = null;
     }
     setCameraOn(false);
+    setPhase("idle");
   };
 
-  // Liveness 
+  const detectFace = async () => {
+    return faceapi
+      .detectSingleFace(
+        videoRef.current,
+        new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })
+      )
+      .withFaceLandmarks()
+      .withFaceExpressions();
+  };
+
+  const livenessTick = async () => {
+    if (!livenessRef.current.running) return;
+
+    const detection = await detectFace();
+
+    if (!detection) {
+      setPhase("no-face");
+      livenessRef.current.timer = setTimeout(livenessTick, 300);
+      return;
+    }
+
+    const nose = detection.landmarks.getNose()[3];
+    const offset = nose.x - videoRef.current.videoWidth / 2;
+    const happy = detection.expressions.happy;
+    const s = livenessRef.current;
+
+    if (s.step === 0) {
+      setPhase("liveness-left");
+      if (offset < -60) s.stableCount++;
+      else s.stableCount = 0;
+      if (s.stableCount >= 5) {
+        s.stableCount = 0;
+        setPhase("step-done");
+        setStepComplete("Izquierda ✓");
+        s.stepTimer = setTimeout(() => {
+          s.step = 1;
+          livenessRef.current.timer = setTimeout(livenessTick, 300);
+        }, 600);
+        return;
+      }
+    } else if (s.step === 1) {
+      setPhase("liveness-right");
+      if (offset > 60) s.stableCount++;
+      else s.stableCount = 0;
+      if (s.stableCount >= 5) {
+        s.stableCount = 0;
+        setPhase("step-done");
+        setStepComplete("Derecha ✓");
+        s.stepTimer = setTimeout(() => {
+          s.step = 2;
+          livenessRef.current.timer = setTimeout(livenessTick, 300);
+        }, 600);
+        return;
+      }
+    } else if (s.step === 2) {
+      setPhase("liveness-smile");
+      if (happy > 0.75) s.stableCount++;
+      else s.stableCount = 0;
+      if (s.stableCount >= 5) {
+        s.stableCount = 0;
+        setPhase("step-done");
+        setStepComplete("Sonrisa ✓");
+        s.stepTimer = setTimeout(() => {
+          s.running = false;
+          setLivenessPassed(true);
+          setPhase("idle");
+          setMessage("Identidad validada ✓");
+        }, 600);
+        return;
+      }
+    }
+
+    livenessRef.current.timer = setTimeout(livenessTick, 300);
+  };
+
   const startLiveness = () => {
     if (!cameraOn) return setMessage("Inicia la cámara primero");
 
-    runningLiveness.current = true;
-    step.current        = 0;
-    stableCounter.current = 0;
-
-    const interval = setInterval(async () => {
-      if (!runningLiveness.current) return;
-
-      const detection = await faceapi
-        .detectSingleFace(
-          videoRef.current,
-          new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })
-        )
-        .withFaceLandmarks()
-        .withFaceExpressions();
-
-      if (!detection) { setMessage("No se detecta rostro"); return; }
-
-      const nose   = detection.landmarks.getNose()[3];
-      const offset = nose.x - videoRef.current.videoWidth / 2;
-
-      if (step.current === 0) {
-        setMessage("Mira a la izquierda");
-        if (offset < -60) stableCounter.current++;
-        else stableCounter.current = 0;
-        if (stableCounter.current >= 5) {
-          step.current = 1; stableCounter.current = 0;
-          setMessage("Izquierda confirmada ✓");
-        }
-      } else if (step.current === 1) {
-        setMessage("Mira a la derecha");
-        if (offset > 60) stableCounter.current++;
-        else stableCounter.current = 0;
-        if (stableCounter.current >= 5) {
-          step.current = 2; stableCounter.current = 0;
-          setMessage("Derecha confirmada ✓");
-        }
-      } else if (step.current === 2) {
-        setMessage("Sonríe");
-        if (detection.expressions.happy > 0.75) stableCounter.current++;
-        else stableCounter.current = 0;
-        if (stableCounter.current >= 5) {
-          clearInterval(interval);
-          runningLiveness.current = false;
-          setLivenessPassed(true);
-          setMessage("Liveness aprobado ✓");
-        }
-      }
-    }, 300);
+    stopLiveness();
+    livenessRef.current = { running: true, step: 0, stableCount: 0, timer: null, stepTimer: null };
+    setPhase("liveness-left");
+    setStepComplete("");
+    setMessage("");
+    livenessRef.current.timer = setTimeout(livenessTick, 300);
   };
 
-  // Captura con validación de calidad 
   const captureDescriptor = async () => {
     setLoading(true);
-    const samples     = [];
+    const samples = [];
     const MAX_INTENTOS = 20;
-    let intentos      = 0;
+    let intentos = 0;
 
     while (samples.length < 5 && intentos < MAX_INTENTOS) {
       intentos++;
@@ -163,44 +250,33 @@ export default function RegistroReconocimiento() {
       const detection = await faceapi
         .detectSingleFace(
           videoRef.current,
-          new faceapi.TinyFaceDetectorOptions({
-            inputSize: 224,
-            scoreThreshold: 0.85,   
-          })
+          new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.85 })
         )
         .withFaceLandmarks()
         .withFaceDescriptor();
 
       if (!detection) {
-        setMessage("Rostro no detectado, ajusta tu posición...");
+        setPhase("no-face");
         await new Promise((r) => setTimeout(r, 300));
         continue;
       }
 
-      const box       = detection.detection.box;
+      const box = detection.detection.box;
       const faceRatio = (box.width * box.height) /
-                        (videoRef.current.videoWidth * videoRef.current.videoHeight);
+        (videoRef.current.videoWidth * videoRef.current.videoHeight);
 
       if (faceRatio < 0.08) {
-        setMessage("Acércate más a la cámara");
         await new Promise((r) => setTimeout(r, 300));
         continue;
       }
 
-      if (!isFaceFrontal(detection.landmarks)) {
-        setMessage("Mira de frente a la cámara");
-        await new Promise((r) => setTimeout(r, 300));
-        continue;
-      }
-
-      if (!isFaceVertical(detection.landmarks)) {
-        setMessage("Mantén la cabeza recta");
+      if (!isFaceFrontal(detection.landmarks) || !isFaceVertical(detection.landmarks)) {
         await new Promise((r) => setTimeout(r, 300));
         continue;
       }
 
       samples.push(detection.descriptor);
-      setMessage(`Capturando rostro (${samples.length}/5) ✓`);
+      setCaptureStep(samples.length);
       await new Promise((r) => setTimeout(r, 250));
     }
 
@@ -212,8 +288,6 @@ export default function RegistroReconocimiento() {
       return null;
     }
 
-    setMessage("Procesando rostro...");
-
     const avg = samples[0].map((_, i) =>
       samples.reduce((s, d) => s + d[i], 0) / samples.length
     );
@@ -222,48 +296,127 @@ export default function RegistroReconocimiento() {
     return avg;
   };
 
-  // Registro
-  const registerFace = async () => {
-    if (!livenessPassed) return setMessage("Falta verificación de vida");
+  const handleSaveFace = async () => {
+    if (!livenessPassed) return setMessage("Falta validación de identidad");
 
+    setPhase("capturing");
     const descriptor = await captureDescriptor();
-    if (!descriptor) return;
+    if (!descriptor) {
+      setPhase("idle");
+      return;
+    }
 
     try {
-      const response = await fetch(`${API_URL}/register/face`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          voter_id:   registrationId,
-          descriptor: Array.from(descriptor),
-        }),
-      });
+      const result = await registerFace(registrationId, Array.from(descriptor));
 
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
+      if (!result.success) {
         setMessage(result.error || "Error guardando biometría");
+        setPhase("idle");
         return;
       }
 
       setFaceSaved(true);
-      setMessage(result.message);
+      setPhase("saved");
+      setMessage("");
 
     } catch (err) {
       console.error(err);
       setMessage("Error de conexión con el servidor");
+      setPhase("idle");
     }
   };
 
-  // Navegación
   const goNext = () => { stopCamera(); navigate("/registro/biometrico"); };
 
   useEffect(() => {
     loadModels();
-    return () => stopCamera();
+    return () => {
+      stopCamera();
+    };
   }, []);
 
-  
+  const renderOverlay = () => {
+    if (!cameraOn) return null;
+
+    return (
+      <div className="rr-overlay">
+        {phase === "no-face" && (
+          <>
+            <div className="rr-hologram">
+              <HeadSilhouette />
+            </div>
+            <span className="rr-overlay-text">Enfoca tu rostro</span>
+          </>
+        )}
+
+        {phase === "liveness-left" && (
+          <>
+            <div className="rr-hologram rr-hologram--left">
+              <ArrowLeft />
+            </div>
+            <span className="rr-overlay-text">Gira a la izquierda</span>
+          </>
+        )}
+
+        {phase === "liveness-right" && (
+          <>
+            <div className="rr-hologram">
+              <ArrowRight />
+            </div>
+            <span className="rr-overlay-text">Gira a la derecha</span>
+          </>
+        )}
+
+        {phase === "liveness-smile" && (
+          <>
+            <div className="rr-hologram">
+              <SmileFace />
+            </div>
+            <span className="rr-overlay-text">Sonríe</span>
+          </>
+        )}
+
+        {phase === "step-done" && (
+          <>
+            <div className="rr-hologram">
+              <CheckIcon />
+            </div>
+            <span className="rr-overlay-text" style={{ color: "#22c55e" }}>
+              {stepComplete}
+            </span>
+          </>
+        )}
+
+        {phase === "capturing" && (
+          <>
+            <div className="rr-hologram">
+              <CheckIcon />
+            </div>
+            <span className="rr-overlay-text" style={{ fontSize: 14 }}>
+              Capturando... {captureStep}/5
+            </span>
+            <div className="rr-overlay-progress">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <div key={n} className={`rr-overlay-dot ${n <= captureStep ? "rr-overlay-dot--active" : ""}`} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {phase === "saved" && (
+          <>
+            <div className="rr-hologram">
+              <CheckIcon />
+            </div>
+            <span className="rr-overlay-text" style={{ color: "#22c55e" }}>
+              Rostro registrado ✓
+            </span>
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="rr-page">
       <div className="rr-card">
@@ -279,19 +432,8 @@ export default function RegistroReconocimiento() {
             className="rr-webcam"
           />
           <div className="rr-scan-frame" />
+          {renderOverlay()}
         </div>
-
-        {/* Barra de progreso de captura */}
-        {captureStep > 0 && (
-          <div className="rr-progress">
-            {[1,2,3,4,5].map((n) => (
-              <div
-                key={n}
-                className={`rr-progress-dot ${n <= captureStep ? "active" : ""}`}
-              />
-            ))}
-          </div>
-        )}
 
         <div className="rr-buttons">
           <button
@@ -307,13 +449,13 @@ export default function RegistroReconocimiento() {
             className="rr-btn-primary"
             disabled={!cameraOn || livenessPassed}
           >
-            Verificar vida
+            Validar identidad
           </button>
 
           <button
-            onClick={registerFace}
+            onClick={handleSaveFace}
             className="rr-btn-primary"
-            disabled={!livenessPassed || loading}
+            disabled={!livenessPassed || loading || faceSaved}
           >
             {loading ? "Capturando..." : "Registrar rostro"}
           </button>
@@ -325,7 +467,9 @@ export default function RegistroReconocimiento() {
           )}
         </div>
 
-        <p className="rr-message">{message}</p>
+        {message && (
+          <p className="rr-message">{message}</p>
+        )}
       </div>
     </div>
   );

@@ -4,8 +4,8 @@ import AdminHeader from '../components/layout/header/AdminHeader'
 import Footer from '../components/layout/footer/AdminFooter'
 
 const glassCard = {
-  background: '#13162A',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
+  background: 'var(--bg-surface)',
+  border: '1px solid var(--border)',
   borderRadius: '16px',
 }
 

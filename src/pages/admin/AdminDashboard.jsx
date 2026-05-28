@@ -5,9 +5,9 @@ import Footer from '../components/layout/footer/AdminFooter'
 import { getVoteResults, getTotalVotes, getTurnout } from "../../services/api";
 
 const glassPanel = {
-  background: 'rgba(19, 22, 42, 0.6)',
+  background: 'var(--bg-glass)',
   backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
+  border: '1px solid var(--border)',
 }
 
 

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../../context/ThemeContext";
 import Footer from "../components/layout/footer/Footer";
-import API_URL from "../../config/api";
+import { getVoter, updateIdentity } from "../../services/api";
 import { useRegistration } from "../../context/useRegistration";
 import { toast } from "sonner";
 import "../../css/registro/Registroidentidad.css";
@@ -9,6 +10,7 @@ import "../../css/registro/Registroidentidad.css";
 export default function RegistroIdentidad() {
 
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const { registrationId } = useRegistration();
 
   const [formData, setFormData] = useState({
@@ -28,8 +30,7 @@ export default function RegistroIdentidad() {
     const loadData = async () => {
 
       try {
-        const res = await fetch(`${API_URL}/register/voter/${registrationId}`);
-        const data = await res.json();
+        const data = await getVoter(registrationId);
 
         if (!data.success) {
           toast.error("Error cargando datos");
@@ -65,22 +66,17 @@ export default function RegistroIdentidad() {
 
     try {
 
-      const res = await fetch(
-        `${API_URL}/register/identity/${registrationId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData)
-        }
-      );
-
-      const result = await res.json();
+      const result = await updateIdentity(registrationId, formData);
 
       if (!result.success) {
         toast.error(result.error || "Error");
         return;
       }
 
+      sessionStorage.setItem("token", result.token);
+      sessionStorage.setItem("voter_id", registrationId);
+      sessionStorage.setItem("voter", JSON.stringify({ id: registrationId }));
+      
       toast.success("Registro completado");
       navigate("/registro/reconocimiento");
 
@@ -98,11 +94,14 @@ export default function RegistroIdentidad() {
       <header className="ri-header">
         <nav className="ri-nav">
 
-          <span className="ri-logo">
+          <span className="ri-logo" onClick={() => navigate("/")}>
             NEXA VOTE
           </span>
 
           <div className="ri-nav-icons">
+            <button className="theme-toggle" onClick={toggleTheme}>
+              <span className="material-symbols-outlined">{theme === "light" ? "dark_mode" : "light_mode"}</span>
+            </button>
             <span className="material-symbols-outlined ri-nav-icon">
               verified_user
             </span>

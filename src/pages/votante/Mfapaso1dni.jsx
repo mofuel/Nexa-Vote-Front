@@ -3,9 +3,10 @@ import { useState } from "react";
 import { BrowserPDF417Reader } from "@zxing/browser";
 import { DecodeHintType } from "@zxing/library";
 import { toast } from "sonner";
-import API_URL from "../../config/api";
+import { useTheme } from "../../context/ThemeContext";
 import Footer from "../components/layout/footer/Footer";
 import MFAStepper from "../components/ui/Mfastepper";
+import { validateDNI } from "../../services/api";
 
 import "../../css/votante/Mfapaso1dni.css";
 
@@ -14,6 +15,7 @@ import "../../css/votante/Mfapaso1dni.css";
 export default function MFAPaso1DNI() {
 
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   const [loading, setLoading] = useState(false);
   const [estado, setEstado] = useState("");
@@ -89,14 +91,6 @@ export default function MFAPaso1DNI() {
 
   const handleImage = async (event) => {
 
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      toast.error("Debe iniciar sesión");
-      navigate("/login");
-      return;
-    }
-
     const file = event.target.files[0];
     if (!file) return;
 
@@ -147,18 +141,9 @@ export default function MFAPaso1DNI() {
 
       setEstado("Validando con el servidor...");
 
-      const response = await fetch(`${API_URL}/api/mfa/validate-dni`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ dni_scanned: parsed.dni }),
-      });
+      const data = await validateDNI(parsed.dni);
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         toast.error(data.error || "DNI no válido");
         return;
       }
@@ -189,6 +174,11 @@ export default function MFAPaso1DNI() {
       <header className="mfa1-header">
         <nav className="mfa1-nav">
           <span className="mfa1-logo">NEXA VOTE</span>
+          <div className="mfa1-nav-right">
+            <button className="theme-toggle" onClick={toggleTheme}>
+              <span className="material-symbols-outlined">{theme === "light" ? "dark_mode" : "light_mode"}</span>
+            </button>
+          </div>
         </nav>
       </header>
 
