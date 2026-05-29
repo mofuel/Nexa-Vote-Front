@@ -84,24 +84,25 @@ export async function loginAdmin(email, password) {
 }
 
 
-
-
 export async function getVoteResults() {
-  const response = await fetch(`${API_URL}/api/votes/results`);
-  return await response.json();
+  return apiFetch("/api/votes/results");
 }
+
 
 export async function getTotalVotes() {
-  const response = await fetch(`${API_URL}/api/votes/total`);
-  return await response.json();
+  return apiFetch("/api/votes/total");
 }
+
+
 
 export async function getTurnout() {
-  const response = await fetch(`${API_URL}/api/votes/turnout`);
-  return await response.json();
+  return apiFetch("/api/votes/turnout");
 }
 
 
+export async function getTurnoutDetailed() {
+  return apiFetch("/api/votes/turnout-detailed");
+}
 
 // MFA
 export async function validateDNI(dniScanned) {
@@ -198,4 +199,8 @@ export async function completeRegistration(id) {
 
 export async function getAuditLogs() {
   return apiFetch("/api/admin/audit-logs");
+}
+
+export async function getVoteReport() {
+  return apiFetch("/api/votes/report");
 }

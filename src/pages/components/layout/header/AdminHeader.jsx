@@ -29,7 +29,7 @@ export default function AdminHeader({ onMenuClick }) {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
         <div style={{ display: 'flex', gap: '24px' }}>
-          {['Overview', 'Regions', 'Security'].map((item, i) => (
+          {['Resumen', 'Regiones', 'Seguridad'].map((item, i) => (
             <span key={item} style={{
               color: i === 0 ? 'var(--text-accent)' : 'var(--text-secondary)',
               fontWeight: i === 0 ? 700 : 400,

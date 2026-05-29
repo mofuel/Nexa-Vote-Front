@@ -316,6 +316,49 @@
   font-weight: 500;
 }
 
+/* ─── Blank Vote Card ─── */
+.sc-card-blank {
+  border: 2px dashed var(--border);
+  background: var(--bg-badge);
+}
+
+.sc-card-blank:hover {
+  border-color: var(--text-secondary);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(255, 255, 255, 0.05);
+}
+
+.sc-card-blank.selected {
+  border-color: var(--accent);
+  border-style: solid;
+  box-shadow: 0 0 0 2px var(--accent), 0 12px 40px rgba(108, 71, 255, 0.15);
+  background: var(--bg-glass);
+}
+
+.sc-card-blank.selected::before {
+  background: linear-gradient(90deg, var(--accent), #8b7ad6);
+}
+
+.sc-avatar-blank {
+  background: var(--bg-surface);
+  border-color: var(--border);
+}
+
+.sc-avatar-blank .material-symbols-outlined {
+  color: var(--text-secondary);
+  font-size: 36px;
+}
+
+.sc-card-blank.selected .sc-avatar-blank {
+  border-color: var(--accent);
+}
+
+.sc-tag-blank {
+  background: transparent;
+  border-color: var(--text-secondary);
+  color: var(--text-secondary);
+}
+
 /* ─── Tags ─── */
 .sc-tags {
   display: flex;

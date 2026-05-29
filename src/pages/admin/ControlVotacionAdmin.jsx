@@ -2,6 +2,7 @@ import { useState } from 'react'
 import AdminSidebar from '../components/layout/sidebar/AdminSidebar'
 import AdminHeader from '../components/layout/header/AdminHeader'
 import Footer from '../components/layout/footer/AdminFooter'
+import ConfirmVotingModal from '../../components/ConfirmVotingModal'
 
 const glassPanel = {
   background: 'var(--bg-glass)',
@@ -10,17 +11,48 @@ const glassPanel = {
 }
 
 export default function ControlVotacionAdmin() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('nexavote_sidebar_open');
+      if (saved !== null) return saved === 'true';
+      return window.innerWidth >= 1024;
+    }
+    return true;
+  })
   const [votingOpen, setVotingOpen] = useState(true)
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingState, setPendingState] = useState(null);
+
+  const handleToggleClick = () => {
+    setPendingState(!votingOpen);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmToggle = () => {
+    setVotingOpen(pendingState);
+    setShowConfirmModal(false);
+    setPendingState(null);
+  };
+
+  const handleCancelToggle = () => {
+    setShowConfirmModal(false);
+    setPendingState(null);
+  };
 
   return (
     <div style={{ display: 'flex', background: 'var(--bg-page)', color: 'var(--text-primary)', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
 
-      <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <AdminSidebar isOpen={sidebarOpen} onClose={() => {
+        setSidebarOpen(false);
+        localStorage.setItem('nexavote_sidebar_open', 'false');
+      }} />
 
       <main style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh', marginLeft: '256px' }}>
 
-        <AdminHeader onMenuClick={() => setSidebarOpen(true)} />
+        <AdminHeader onMenuClick={() => {
+          setSidebarOpen(true);
+          localStorage.setItem('nexavote_sidebar_open', 'true');
+        }} />
 
         <div style={{ padding: '40px', maxWidth: '1280px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
@@ -33,7 +65,7 @@ export default function ControlVotacionAdmin() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '12px', color: '#c9c3d9', letterSpacing: '0.1em' }}>CLOSED</span>
               <div
-                onClick={() => setVotingOpen(!votingOpen)}
+                onClick={handleToggleClick}
                 style={{
                   width: '64px', height: '32px', borderRadius: '999px',
                   background: votingOpen ? '#41eec2' : '#36333e',
@@ -102,6 +134,13 @@ export default function ControlVotacionAdmin() {
 
         <Footer />
       </main>
+
+      <ConfirmVotingModal
+        isOpen={showConfirmModal}
+        nextState={pendingState ?? false}
+        onConfirm={handleConfirmToggle}
+        onCancel={handleCancelToggle}
+      />
     </div>
   )
 }

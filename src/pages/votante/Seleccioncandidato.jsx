@@ -21,6 +21,7 @@ export default function SeleccionCandidato() {
   const [message, setMessage] = useState("");
 
   const selectedCandidate = candidates.find((c) => c.id === selected);
+  const selectedName = selected === "blank" ? "Voto en Blanco" : (selectedCandidate?.name || "Ninguno");
   const isSuccess = message.includes("correctamente");
 
   useEffect(() => {
@@ -135,44 +136,68 @@ export default function SeleccionCandidato() {
         )}
 
         {!loading && candidates.length > 0 && (
-          <div className="sc-grid">
-            {candidates.map((candidate) => (
-              <div
-                key={candidate.id}
-                className={`sc-card${selected === candidate.id ? " selected" : ""}`}
-                onClick={() => setSelected(candidate.id)}
-              >
-                <div className="sc-card-top">
-                  <div className="sc-avatar">
-                    {candidate.photo_url ? (
-                      <img
-                        src={candidate.photo_url}
-                        alt={candidate.name}
-                        className="sc-avatar-img"
-                      />
-                    ) : (
-                      <span className="material-symbols-outlined">person</span>
-                    )}
+          <>
+            <div className="sc-grid">
+              {candidates.map((candidate) => (
+                <div
+                  key={candidate.id}
+                  className={`sc-card${selected === candidate.id ? " selected" : ""}`}
+                  onClick={() => setSelected(candidate.id)}
+                >
+                  <div className="sc-card-top">
+                    <div className="sc-avatar">
+                      {candidate.photo_url ? (
+                        <img
+                          src={candidate.photo_url}
+                          alt={candidate.name}
+                          className="sc-avatar-img"
+                        />
+                      ) : (
+                        <span className="material-symbols-outlined">person</span>
+                      )}
+                    </div>
+
+                    <div className="sc-radio">
+                      {selected === candidate.id && (
+                        <span className="material-symbols-outlined">check</span>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="sc-radio">
-                    {selected === candidate.id && (
-                      <span className="material-symbols-outlined">check</span>
-                    )}
+                  <h3 className="sc-candidate-name">{candidate.name}</h3>
+                  <p className="sc-candidate-party">{candidate.party}</p>
+
+                  <div className="sc-tags">
+                    {CARD_TAGS.map((tag) => (
+                      <span key={tag} className="sc-tag">{tag}</span>
+                    ))}
                   </div>
                 </div>
+              ))}
+            </div>
 
-                <h3 className="sc-candidate-name">{candidate.name}</h3>
-                <p className="sc-candidate-party">{candidate.party}</p>
-
-                <div className="sc-tags">
-                  {CARD_TAGS.map((tag) => (
-                    <span key={tag} className="sc-tag">{tag}</span>
-                  ))}
+            {/* Voto en Blanco */}
+            <div
+              className={`sc-card sc-card-blank${selected === "blank" ? " selected" : ""}`}
+              onClick={() => setSelected("blank")}
+            >
+              <div className="sc-card-top">
+                <div className="sc-avatar sc-avatar-blank">
+                  <span className="material-symbols-outlined">do_not_disturb_on</span>
+                </div>
+                <div className="sc-radio">
+                  {selected === "blank" && (
+                    <span className="material-symbols-outlined">check</span>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
+              <h3 className="sc-candidate-name">Voto en Blanco</h3>
+              <p className="sc-candidate-party">Ningún candidato seleccionado</p>
+              <div className="sc-tags">
+                <span className="sc-tag sc-tag-blank">EN BLANCO</span>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Message */}
@@ -192,7 +217,7 @@ export default function SeleccionCandidato() {
             <div>
               <p className="sc-selection-label">Selección Actual</p>
               <p className="sc-selection-name">
-                {selectedCandidate?.name || "Ninguno"}
+                {selectedName}
               </p>
             </div>
 

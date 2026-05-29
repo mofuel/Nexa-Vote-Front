@@ -4,7 +4,10 @@ import { useAuth } from "../context/useAuth";
 export default function ProtectedRoute({ children, adminOnly = false }) {
   const { isAuthenticated, isAdmin, loading } = useAuth();
   if (loading) return <div className="auth-loading" />;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    const hadAdminToken = sessionStorage.getItem("admin_token");
+    return <Navigate to={hadAdminToken ? "/loginadmin" : "/login"} replace />;
+  }
   if (adminOnly && !isAdmin) return <Navigate to="/loginadmin" replace />;
   return children;
 }

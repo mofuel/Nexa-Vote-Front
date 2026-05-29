@@ -18,36 +18,60 @@ const ACTION_COLORS = {
 }
 
 export default function AuditLogsAdmin() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('nexavote_sidebar_open');
+      if (saved !== null) return saved === 'true';
+      return window.innerWidth >= 1024;
+    }
+    return true;
+  })
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [filterStatus, setFilterStatus] = useState('all')
+
+  const fetchLogs = async () => {
+    try {
+      const res = await getAuditLogs()
+      if (res?.success) {
+        setLogs(res.data || [])
+      } else {
+        setError(res?.error || "Error al cargar auditoría")
+      }
+    } catch {
+      setError("Error de conexión con el backend")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await getAuditLogs()
-        if (res?.success) {
-          setLogs(res.data || [])
-        } else {
-          setError(res?.error || "Error al cargar auditoría")
-        }
-      } catch {
-        setError("Error de conexión con el backend")
-      } finally {
-        setLoading(false)
-      }
-    })()
+    fetchLogs()
+    const interval = setInterval(fetchLogs, 15000)
+    return () => clearInterval(interval)
   }, [])
+
+  const filteredLogs = logs.filter(log => {
+    if (filterStatus === 'all') return true;
+    if (filterStatus === 'fail') return log.status && log.status.startsWith('fail');
+    return log.status === filterStatus;
+  })
 
   return (
     <div style={{ display: 'flex', background: 'var(--bg-page)', color: 'var(--text-primary)', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
 
-      <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <AdminSidebar isOpen={sidebarOpen} onClose={() => {
+        setSidebarOpen(false);
+        localStorage.setItem('nexavote_sidebar_open', 'false');
+      }} />
 
       <main style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh', marginLeft: '256px' }}>
 
-        <AdminHeader onMenuClick={() => setSidebarOpen(true)} />
+        <AdminHeader onMenuClick={() => {
+          setSidebarOpen(true);
+          localStorage.setItem('nexavote_sidebar_open', 'true');
+        }} />
 
         <div style={{ padding: '40px', maxWidth: '1280px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
@@ -79,9 +103,31 @@ export default function AuditLogsAdmin() {
                 color: '#41eec2', display: 'flex', alignItems: 'center', gap: '6px',
               }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>verified</span>
-                {logs.length} registros
+                {filteredLogs.length} registros
               </span>
             </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+            {[
+              { key: 'all', label: 'Todos', color: '#c9beff' },
+              { key: 'success', label: 'Exitoso', color: '#41eec2' },
+              { key: 'fail', label: 'Fallido', color: '#ff6b6b' },
+            ].map(opt => (
+              <button
+                key={opt.key}
+                onClick={() => setFilterStatus(opt.key)}
+                style={{
+                  padding: '6px 16px', borderRadius: '6px', border: 'none',
+                  background: filterStatus === opt.key ? opt.color : '#201e29',
+                  color: filterStatus === opt.key ? '#fff' : '#8b92a5',
+                  cursor: 'pointer', fontSize: '12px', fontWeight: 600,
+                  transition: 'all 0.2s',
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
 
           {loading ? (
@@ -94,10 +140,10 @@ export default function AuditLogsAdmin() {
               <span className="material-symbols-outlined" style={{ fontSize: '40px', color: '#ff6b6b', marginBottom: '12px' }}>error</span>
               <p style={{ color: '#ff6b6b', fontWeight: 600 }}>{error}</p>
             </div>
-          ) : logs.length === 0 ? (
+           ) : filteredLogs.length === 0 ? (
             <div style={{ ...glassPanel, borderRadius: '12px', padding: '48px', textAlign: 'center' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '40px', color: 'var(--text-secondary)', opacity: 0.3, marginBottom: '12px' }}>history</span>
-              <p style={{ color: 'var(--text-secondary)' }}>No hay registros de auditoría disponibles.</p>
+              <p style={{ color: 'var(--text-secondary)' }}>{filterStatus === 'all' ? 'No hay registros de auditoría disponibles.' : 'No hay registros con ese estado.'}</p>
             </div>
           ) : (
             <section style={{ ...glassPanel, borderRadius: '12px', overflow: 'hidden' }}>
@@ -118,7 +164,7 @@ export default function AuditLogsAdmin() {
                     </tr>
                   </thead>
                   <tbody>
-                    {logs.map((log) => (
+                    {filteredLogs.map((log) => (
                       <tr key={log.id} style={{
                         borderTop: '1px solid rgba(255,255,255,0.04)',
                         transition: 'background 0.2s',

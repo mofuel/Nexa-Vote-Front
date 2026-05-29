@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import "../../css/admin/LoginAdmin.css";
@@ -154,12 +154,12 @@ export default function LoginAdmin() {
           {/* Secondary Links */}
           <div className="la-secondary-links">
             {SECONDARY_LINKS.map((text, idx) => (
-              <>
-                <a key={text} href="#" className="la-secondary-link">{text}</a>
+              <Fragment key={text}>
+                <a href="#" className="la-secondary-link">{text}</a>
                 {idx < SECONDARY_LINKS.length - 1 && (
-                  <span key={`sep-${idx}`} className="la-secondary-sep">•</span>
+                  <span className="la-secondary-sep">•</span>
                 )}
-              </>
+              </Fragment>
             ))}
           </div>
 

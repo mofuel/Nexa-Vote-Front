@@ -10,19 +10,19 @@ export default function AdminSidebar({ isOpen, onClose }) {
     { icon: 'dashboard', label: 'Dashboard', path: '/admin/dashboard' },
     { icon: 'analytics', label: 'Live Results', path: '/admin/resultados' },
     { icon: 'history_edu', label: 'Audit Logs', path: '/admin/auditoria' },
-    { icon: 'how_to_reg', label: 'Voter Registry', path: '/admin/votantes' },
+    { icon: 'how_to_reg', label: 'Graphics', path: '/admin/votantes' },
   ]
 
   const isActive = (path) => location.pathname === path
 
   const handleLogout = () => {
     logout();
-    navigate("/loginadmin");
+    window.location.href = "/loginadmin";
   };
 
   return (
     <>
-      {isOpen && (
+      {isOpen && typeof window !== 'undefined' && window.innerWidth < 1024 && (
         <div onClick={onClose} style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 45,
         }} />
