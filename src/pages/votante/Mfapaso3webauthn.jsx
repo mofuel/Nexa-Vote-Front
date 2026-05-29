@@ -43,29 +43,32 @@ export default function MFAPaso3WebAuthn() {
 
 
 
-      const options = await webauthnAuthOptions();
+      const result = await webauthnAuthOptions();
 
-      if (!options.success) {
-        alert(options.error || "Error obteniendo challenge");
+      if (!result.success) {
+        alert(result.error || "Error obteniendo challenge");
         return;
       }
 
+      const publicKey = result.data.publicKey;
+      function base64urlToBytes(str) {
+        const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+        const binaryStr = atob(base64);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+        return bytes;
+      }
 
-      const challenge = Uint8Array.from(
-        atob(options.challenge),
-        c => c.charCodeAt(0)
-      );
-
-
-
-      const credential = await navigator.credentials.get({
-        publicKey: {
-          challenge,
-          userVerification: "required",
-          timeout: 60000
+      publicKey.challenge = base64urlToBytes(publicKey.challenge);
+      
+      if (publicKey.allowCredentials) {
+        for (const cred of publicKey.allowCredentials) {
+          cred.id = base64urlToBytes(cred.id);
         }
-      });
+      }
 
+      const credential = await navigator.credentials.get({ publicKey });
+      const state = result.state;
       if (!credential) {
         alert("No se pudo autenticar biometría");
         return;
@@ -74,14 +77,26 @@ export default function MFAPaso3WebAuthn() {
 
 
       const payload = {
-        voter_id: sessionStorage.getItem("voter_id"),
-        id: credential.id
+        state,
+        id: credential.id,
+        raw_id: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+        response: {
+          client_data_json: btoa(
+            String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))
+          ),
+          authenticator_data: btoa(
+            String.fromCharCode(...new Uint8Array(credential.response.authenticatorData))
+          ),
+          signature: btoa(
+            String.fromCharCode(...new Uint8Array(credential.response.signature))
+          ),
+        },
       };
 
-      const result = await webauthnAuthVerify(payload);
+      const verifyResult = await webauthnAuthVerify(payload);
 
-      if (!result.success) {
-        alert(result.error || "Error validando WebAuthn");
+      if (!verifyResult.success) {
+        alert(verifyResult.error || "Error validando WebAuthn");
         return;
       }
 

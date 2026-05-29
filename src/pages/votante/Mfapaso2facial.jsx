@@ -8,7 +8,6 @@ import MFAStepper from "../components/ui/Mfastepper";
 import "../../css/votante/Mfapaso2facial.css";
 import { validateFace } from "../../services/api";
 
-
 const isFaceFrontal = (landmarks) => {
   const leftEye  = landmarks.getLeftEye();
   const rightEye = landmarks.getRightEye();
@@ -30,35 +29,34 @@ const isFaceVertical = (landmarks) => {
   const rightEye = landmarks.getRightEye();
   const nose     = landmarks.getNose();
 
-  const leftEyeY    = leftEye.reduce((s, p)  => s + p.y, 0) / leftEye.length;
-  const rightEyeY   = rightEye.reduce((s, p) => s + p.y, 0) / rightEye.length;
+  const leftEyeY   = leftEye.reduce((s, p)  => s + p.y, 0) / leftEye.length;
+  const rightEyeY  = rightEye.reduce((s, p) => s + p.y, 0) / rightEye.length;
   const eyesCenterY = (leftEyeY + rightEyeY) / 2;
   const noseTipY    = nose[3].y;
 
-  const leftEyeX  = leftEye.reduce((s, p)  => s + p.x, 0) / leftEye.length;
-  const rightEyeX = rightEye.reduce((s, p) => s + p.x, 0) / rightEye.length;
-  const eyeDistance = Math.abs(rightEyeX - leftEyeX);
+  const eyeDistance = Math.abs(
+    landmarks.getRightEye().reduce((s, p) => s + p.x, 0) / rightEye.length -
+    landmarks.getLeftEye().reduce((s, p)  => s + p.x, 0) / leftEye.length
+  );
 
   const verticalOffset = noseTipY - eyesCenterY;
+
   return verticalOffset > eyeDistance * 0.5 && verticalOffset < eyeDistance * 2.5;
 };
-
 
 export default function MFAPaso2Facial() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const videoRef = useRef(null);
 
-  const [phase, setPhase]               = useState("idle");
-  const [message, setMessage]           = useState("Presiona Iniciar para comenzar");
+  const [message, setMessage] = useState("Presiona Iniciar para comenzar");
   const [livenessPassed, setLivenessPassed] = useState(false);
-  const [captureStep, setCaptureStep]   = useState(0);
+  const [cameraOn, setCameraOn] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
-
-  const step            = useRef(0);
-  const stableCounter   = useRef(0);
-  const runningLiveness = useRef(false);
-  const intervalRef     = useRef(null);
+  const [captureStep, setCaptureStep] = useState(0);
+  const [phase, setPhase] = useState("idle");
+  const [stepComplete, setStepComplete] = useState("");
+  const livenessRef = useRef({ running: false, step: 0, stableCount: 0, timer: null, stepTimer: null });
 
   const loadModels = async () => {
     await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
@@ -67,76 +65,128 @@ export default function MFAPaso2Facial() {
     await faceapi.nets.faceExpressionNet.loadFromUri("/models");
   };
 
+  const stopLiveness = () => {
+    livenessRef.current.running = false;
+    if (livenessRef.current.timer) clearTimeout(livenessRef.current.timer);
+    if (livenessRef.current.stepTimer) clearTimeout(livenessRef.current.stepTimer);
+  };
+
   const startCamera = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     videoRef.current.srcObject = stream;
+    setCameraOn(true);
+
+    if (!modelsLoaded) {
+      await loadModels();
+      setModelsLoaded(true);
+    }
+
+    setPhase("idle");
+    setMessage("Cámara activa");
   };
 
   const stopCamera = () => {
+    stopLiveness();
     const stream = videoRef.current?.srcObject;
     if (stream) {
       stream.getTracks().forEach((t) => t.stop());
       videoRef.current.srcObject = null;
     }
+    setCameraOn(false);
+    setPhase("idle");
+  };
+
+  const detectFace = async () => {
+    return faceapi
+      .detectSingleFace(
+        videoRef.current,
+        new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })
+      )
+      .withFaceLandmarks()
+      .withFaceExpressions();
+  };
+
+  const livenessTick = async () => {
+    if (!livenessRef.current.running) return;
+
+    const detection = await detectFace();
+
+    if (!detection) {
+      setPhase("no-face");
+      livenessRef.current.timer = setTimeout(livenessTick, 300);
+      return;
+    }
+
+    const nose = detection.landmarks.getNose()[3];
+    const offset = nose.x - videoRef.current.videoWidth / 2;
+    const happy = detection.expressions.happy;
+    const s = livenessRef.current;
+
+    if (s.step === 0) {
+      setPhase("liveness-left");
+      if (offset < -60) s.stableCount++;
+      else s.stableCount = 0;
+      if (s.stableCount >= 5) {
+        s.stableCount = 0;
+        setPhase("step-done");
+        setStepComplete("Izquierda ✓");
+        s.stepTimer = setTimeout(() => {
+          s.step = 1;
+          livenessRef.current.timer = setTimeout(livenessTick, 300);
+        }, 600);
+        return;
+      }
+    } else if (s.step === 1) {
+      setPhase("liveness-right");
+      if (offset > 60) s.stableCount++;
+      else s.stableCount = 0;
+      if (s.stableCount >= 5) {
+        s.stableCount = 0;
+        setPhase("step-done");
+        setStepComplete("Derecha ✓");
+        s.stepTimer = setTimeout(() => {
+          s.step = 2;
+          livenessRef.current.timer = setTimeout(livenessTick, 300);
+        }, 600);
+        return;
+      }
+    } else if (s.step === 2) {
+      setPhase("liveness-smile");
+      if (happy > 0.75) s.stableCount++;
+      else s.stableCount = 0;
+      if (s.stableCount >= 5) {
+        s.stableCount = 0;
+        setPhase("step-done");
+        setStepComplete("Sonrisa ✓");
+        s.stepTimer = setTimeout(() => {
+          s.running = false;
+          setLivenessPassed(true);
+          setPhase("idle");
+          setMessage("Identidad validada ✓ — capturando rostro...");
+          handleCaptureAndValidate();
+        }, 600);
+        return;
+      }
+    }
+
+    livenessRef.current.timer = setTimeout(livenessTick, 300);
   };
 
   const startLiveness = () => {
-    runningLiveness.current = true;
-    step.current          = 0;
-    stableCounter.current = 0;
-    setPhase("liveness");
+    if (!cameraOn) return setMessage("Inicia la cámara primero");
 
-    intervalRef.current = setInterval(async () => {
-      if (!runningLiveness.current) return;
-
-      const detection = await faceapi
-        .detectSingleFace(
-          videoRef.current,
-          new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })
-        )
-        .withFaceLandmarks()
-        .withFaceExpressions();
-
-      if (!detection) { setMessage("No se detecta rostro"); return; }
-
-      const nose   = detection.landmarks.getNose()[3];
-      const offset = nose.x - videoRef.current.videoWidth / 2;
-
-      if (step.current === 0) {
-        setMessage("👈 Mira a la izquierda");
-        if (offset < -60) stableCounter.current++;
-        else stableCounter.current = 0;
-        if (stableCounter.current >= 5) {
-          step.current = 1; stableCounter.current = 0;
-          setMessage("Izquierda confirmada ✓");
-        }
-      } else if (step.current === 1) {
-        setMessage("👉 Mira a la derecha");
-        if (offset > 60) stableCounter.current++;
-        else stableCounter.current = 0;
-        if (stableCounter.current >= 5) {
-          step.current = 2; stableCounter.current = 0;
-          setMessage("Derecha confirmada ✓");
-        }
-      } else if (step.current === 2) {
-        setMessage("😊 Sonríe");
-        if (detection.expressions.happy > 0.75) stableCounter.current++;
-        else stableCounter.current = 0;
-        if (stableCounter.current >= 5) {
-          clearInterval(intervalRef.current);
-          runningLiveness.current = false;
-          setLivenessPassed(true);
-          setMessage("Liveness aprobado ✓ — capturando rostro...");
-          await captureAndValidate();
-        }
-      }
-    }, 300);
+    stopLiveness();
+    livenessRef.current = { running: true, step: 0, stableCount: 0, timer: null, stepTimer: null };
+    setPhase("liveness-left");
+    setStepComplete("");
+    setMessage("");
+    livenessRef.current.timer = setTimeout(livenessTick, 300);
   };
 
   const captureDescriptor = async () => {
-    const samples      = [];
+    const samples = [];
     const MAX_INTENTOS = 20;
-    let intentos       = 0;
+    let intentos = 0;
 
     while (samples.length < 5 && intentos < MAX_INTENTOS) {
       intentos++;
@@ -151,57 +201,51 @@ export default function MFAPaso2Facial() {
         .withFaceDescriptor();
 
       if (!detection) {
-        setMessage("Rostro no detectado, ajusta tu posición...");
+        setPhase("no-face");
         await new Promise((r) => setTimeout(r, 300));
         continue;
       }
 
-      const box       = detection.detection.box;
+      const box = detection.detection.box;
       const faceRatio = (box.width * box.height) /
-                        (videoRef.current.videoWidth * videoRef.current.videoHeight);
+        (videoRef.current.videoWidth * videoRef.current.videoHeight);
 
       if (faceRatio < 0.08) {
-        setMessage("Acércate más a la cámara");
         await new Promise((r) => setTimeout(r, 300));
         continue;
       }
 
-      if (!isFaceFrontal(detection.landmarks)) {
-        setMessage("Mira de frente a la cámara");
-        await new Promise((r) => setTimeout(r, 300));
-        continue;
-      }
-
-      if (!isFaceVertical(detection.landmarks)) {
-        setMessage("Mantén la cabeza recta");
+      if (!isFaceFrontal(detection.landmarks) || !isFaceVertical(detection.landmarks)) {
         await new Promise((r) => setTimeout(r, 300));
         continue;
       }
 
       samples.push(detection.descriptor);
-      setMessage(`Capturando rostro (${samples.length}/5) ✓`);
+      setCaptureStep(samples.length);
       await new Promise((r) => setTimeout(r, 250));
     }
 
     setCaptureStep(0);
 
-    if (samples.length < 5) return null;
+    if (samples.length < 5) {
+      setMessage("No se pudo capturar. Mejora la iluminación e intenta de nuevo.");
+      return null;
+    }
 
-    return samples[0].map((_, i) =>
+    const avg = samples[0].map((_, i) =>
       samples.reduce((s, d) => s + d[i], 0) / samples.length
     );
+
+    return avg;
   };
 
-  const captureAndValidate = async () => {
+  const handleCaptureAndValidate = async () => {
+    if (!livenessPassed) return setMessage("Falta validación de identidad");
+
     setPhase("capturing");
-    setMessage("Capturando rostro...");
-
     const descriptor = await captureDescriptor();
-
     if (!descriptor) {
-      setPhase("error");
-      setMessage("No se pudo capturar. Mejora la iluminación e intenta de nuevo.");
-      toast.error("Captura fallida");
+      setPhase("idle");
       return;
     }
 
@@ -220,7 +264,6 @@ export default function MFAPaso2Facial() {
 
       setPhase("success");
       setMessage("Identidad verificada ✓");
-
       toast.success("Rostro validado correctamente");
 
       stopCamera();
@@ -235,9 +278,8 @@ export default function MFAPaso2Facial() {
   };
 
   const handleIniciar = async () => {
-
     try {
-      setPhase("loading_models");
+      setPhase("loading-models");
       setMessage("Cargando modelos...");
 
       if (!modelsLoaded) {
@@ -257,20 +299,72 @@ export default function MFAPaso2Facial() {
     }
   };
 
-  const handleReintentar = async () => {
-    setLivenessPassed(false);
-    setCaptureStep(0);
-    setPhase("idle");
-    setMessage("Presiona Iniciar para comenzar");
-    stopCamera();
-  };
-
   useEffect(() => {
     return () => {
-      clearInterval(intervalRef.current);
       stopCamera();
     };
   }, []);
+
+  const renderOverlay = () => {
+    if (!cameraOn) return null;
+
+    return (
+      <div className="mfa2-overlay">
+        {phase === "no-face" && (
+          <span className="mfa2-overlay-text">Enfoca tu rostro</span>
+        )}
+
+        {phase === "liveness-left" && (
+          <span className="mfa2-overlay-text">Gira a la izquierda</span>
+        )}
+
+        {phase === "liveness-right" && (
+          <span className="mfa2-overlay-text">Gira a la derecha</span>
+        )}
+
+        {phase === "liveness-smile" && (
+          <span className="mfa2-overlay-text">Sonríe</span>
+        )}
+
+        {phase === "step-done" && (
+          <span className="mfa2-overlay-text" style={{ color: "#22c55e" }}>
+            {stepComplete}
+          </span>
+        )}
+
+        {phase === "capturing" && (
+          <>
+            <span className="mfa2-overlay-text" style={{ fontSize: 14 }}>
+              Capturando... {captureStep}/5
+            </span>
+            <div className="mfa2-overlay-progress">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <div key={n} className={`mfa2-overlay-dot ${n <= captureStep ? "mfa2-overlay-dot--active" : ""}`} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {phase === "validating" && (
+          <span className="mfa2-overlay-text" style={{ fontSize: 14 }}>
+            Validando...
+          </span>
+        )}
+
+        {phase === "success" && (
+          <span className="mfa2-overlay-text" style={{ color: "#22c55e" }}>
+            Rostro verificado ✓
+          </span>
+        )}
+
+        {phase === "error" && (
+          <span className="mfa2-overlay-text" style={{ color: "#ff6b6b" }}>
+            Error — intenta de nuevo
+          </span>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="mfa2-page">
@@ -314,7 +408,6 @@ export default function MFAPaso2Facial() {
                 <div className="mfa2-corner mfa2-corner--bl" />
                 <div className="mfa2-corner mfa2-corner--br" />
 
-                {/* ✅ Video siempre montado en el DOM — solo se oculta visualmente */}
                 <video
                   ref={videoRef}
                   autoPlay
@@ -322,12 +415,11 @@ export default function MFAPaso2Facial() {
                   className="mfa2-video"
                   style={{
                     width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px",
-                    display: (phase === "idle" || phase === "loading_models") ? "none" : "block"
+                    display: (phase === "idle" || phase === "loading-models") ? "none" : "block"
                   }}
                 />
 
-                {/* SVG decorativo solo cuando la cámara no está activa */}
-                {(phase === "idle" || phase === "loading_models") && (
+                {(phase === "idle" || phase === "loading-models") && (
                   <svg
                     className="mfa2-face-outline"
                     fill="none"
@@ -338,25 +430,12 @@ export default function MFAPaso2Facial() {
                     <path d="M50 10C35 10 20 25 20 50C20 85 40 110 50 110C60 110 80 85 80 50C80 25 65 10 50 10Z" />
                   </svg>
                 )}
+
+                {renderOverlay()}
               </div>
             </div>
 
-            {/* Barra de progreso captura */}
-            {captureStep > 0 && (
-              <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginTop: "12px" }}>
-                {[1,2,3,4,5].map((n) => (
-                  <div
-                    key={n}
-                    style={{
-                      width: "12px", height: "12px", borderRadius: "50%",
-                      background: n <= captureStep ? "#22c55e" : "#334155",
-                      transition: "background 0.3s"
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-
+            {/* Info message */}
             <div className="mfa2-calibrating">
               <div className="mfa2-calibrating-pill">
                 <span className="mfa2-pulse-dot" />
@@ -374,14 +453,15 @@ export default function MFAPaso2Facial() {
               </button>
             )}
 
-            {(phase === "loading_models" || phase === "liveness" ||
-              phase === "capturing"      || phase === "validating") && (
+            {(phase === "loading-models" || phase === "liveness-left" ||
+              phase === "liveness-right" || phase === "liveness-smile" ||
+              phase === "capturing" || phase === "validating") && (
               <button className="mfa2-btn-scan" disabled style={{ opacity: 0.6 }}>
                 <span className="material-symbols-outlined">hourglass_top</span>
-                {phase === "loading_models" ? "Cargando modelos..."  :
-                 phase === "liveness"       ? "Verificando vida..."  :
-                 phase === "capturing"      ? "Capturando rostro..."  :
-                                             "Validando identidad..."}
+                {phase === "loading-models" ? "Cargando modelos..." :
+                 phase === "capturing"      ? "Capturando rostro..." :
+                 phase === "validating"     ? "Validando identidad..." :
+                                               "Verificando vida..."}
               </button>
             )}
 

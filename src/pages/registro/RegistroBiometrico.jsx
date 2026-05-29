@@ -25,66 +25,51 @@ const RegistroBiometrico = () => {
       }
 
 
-      const options = await webauthnRegisterOptions(registrationId);
-
-      if (!options.success) {
-        setMensaje(options.error || "Error obteniendo challenge");
+      const result = await webauthnRegisterOptions(registrationId);
+      const state = result.state; 
+      if (!result.success) {
+        setMensaje(result.error || "Error obteniendo challenge");
         return;
       }
 
-      const challenge = Uint8Array.from(
-        atob(options.challenge),
-        c => c.charCodeAt(0)
-      );
+      const publicKey = result.data.publicKey;
+      function base64urlToBytes(str) {
+        const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+        const binaryStr = atob(base64);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+        return bytes;
+      }
 
+      publicKey.challenge = base64urlToBytes(publicKey.challenge);      
+      publicKey.user.id = base64urlToBytes(publicKey.user.id);          
 
-      const credential = await navigator.credentials.create({
-        publicKey: {
-          challenge,
-          rp: { name: "Nexa Vote" },
-          user: {
-            id: new TextEncoder().encode(registrationId),
-            name: "voter",
-            displayName: "Votante Nexa Vote",
-          },
-          pubKeyCredParams: [
-            { type: "public-key", alg: -7 },
-            { type: "public-key", alg: -257 },
-          ],
-          authenticatorSelection: {
-            authenticatorAttachment: "platform",
-            userVerification: "required"
-          },
-          timeout: 60000,
-          attestation: "none",
-        },
-      });
+      const credential = await navigator.credentials.create({ publicKey });
 
       if (!credential) {
         setMensaje("No se pudo registrar biometría.");
         return;
       }
 
- 
+
       const payload = {
+        state,
         id: credential.id,
-        rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
-        type: credential.type,
+        raw_id: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
         response: {
-          clientDataJSON: btoa(
+          client_data_json: btoa(
             String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))
           ),
-          attestationObject: btoa(
+          attestation_object: btoa(
             String.fromCharCode(...new Uint8Array(credential.response.attestationObject))
           ),
         },
-        voter_id: registrationId
       };
 
-      const result = await webauthnRegisterVerify(payload);
+      const verifyResult = await webauthnRegisterVerify(payload);
 
-      if (!result.success) {
-        setMensaje(result.error || "Error verificando WebAuthn");
+      if (!verifyResult.success) {
+        setMensaje(verifyResult.error || "Error verificando WebAuthn");
         return;
       }
 
