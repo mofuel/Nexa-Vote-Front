@@ -64,7 +64,8 @@ function BarChart({ data }) {
 }
 
 function AgeDonut({ data }) {
-  const total = data.reduce((s, d) => s + d.value, 0);
+  const items = Array.isArray(data) ? data : [];
+  const total = items.reduce((s, d) => s + d.value, 0);
   if (total === 0) {
     return <p style={{ color: '#8b92a5', fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>Sin datos de edad</p>;
   }
@@ -75,7 +76,7 @@ function AgeDonut({ data }) {
   return (
     <div style={{ position: 'relative', width: '160px', height: '160px', margin: '0 auto' }}>
       <svg viewBox="0 0 160 160" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-        {data.map((d, i) => {
+        {items.map((d, i) => {
           const pct = (d.value / total) * 100;
           const angle = (pct / 100) * 360;
           const startAngle = currentAngle;
@@ -109,7 +110,7 @@ function AgeDonut({ data }) {
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       }}>
         <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '22px', color: '#fff' }}>
-          {total.toFixed(0)}%
+          {(items.length > 0 ? (total / items.length) : 0).toFixed(0)}%
         </span>
         <span style={{ color: '#c9c3d9', fontSize: '11px', marginTop: '2px' }}>promedio</span>
       </div>
@@ -170,8 +171,12 @@ export default function GestionVotantes() {
   ]
 
   const agePieData = Object.entries(turnoutByAge).map(([rango, v]) => ({
-    name: rango, value: v.percentage
+    name: rango, value: v.percentage ?? 0
   }))
+
+  const avgTurnout = Object.values(turnoutByAge).reduce((s, v) =>
+    s + (v.percentage || 0), 0
+  ) / Math.max(Object.keys(turnoutByAge).length, 1);
 
   return (
     <div style={{ background: '#0A0C14', color: '#e6e0ef', minHeight: '100vh', fontFamily: 'Inter, sans-serif', display: 'flex' }}>
