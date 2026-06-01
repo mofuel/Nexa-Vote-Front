@@ -2,112 +2,89 @@
 
 ## Tabla De Rutas
 
-| Ruta | Componente | Descripcion |
-| --- | --- | --- |
-| `/` | `Inicio` | Pagina publica con CTA de registro y login. |
-| `/login` | `LoginVotante` | Autenticacion de votante con DNI y password. |
-| `/registro/*` | `RegistroLayout` | Subrutas del alta de votante. |
-| `/registro/` | `RegistroEscaneDNI` | Escaneo PDF417 del reverso del DNI. |
-| `/registro/identidad` | `RegistroIdentidad` | Completa fecha, email y password. |
-| `/registro/reconocimiento` | `RegistroReconocimiento` | Captura descriptor facial con prueba de vida. |
-| `/registro/biometrico` | `RegistroBiometrico` | Registro WebAuthn del dispositivo. |
-| `/registro/verificacion` | `ConfirmacionRegistro` | Confirma datos en Supabase y finaliza registro. |
-| `/loginadmin` | `LoginAdmin` | Autenticacion administrativa. |
-| `/admin/dashboard` | `AdminDashboard` | Resultados, votos emitidos, participacion y auditoria mock. |
-| `/admin/resultados` | `ControlVotacionAdmin` | Control visual del estado de votacion. |
-| `/admin/votantes` | `GestionVotantesAdmin` | Vista mock de gestion de votantes. |
-| `/mfa/escaneo` | `MFAPaso1DNI` | Validacion del DNI del votante autenticado. |
-| `/mfa/facial` | `MFAPaso2Facial` | Validacion facial del votante autenticado. |
-| `/mfa/webauthn` | `MFAPaso3WebAuthn` | Validacion WebAuthn antes de votar. |
-| `/candidatos` | `SeleccionCandidato` | Lista candidatos y registra voto. |
+| Ruta | Componente | Proteccion | Descripcion |
+| --- | --- | --- | --- |
+| `/` | `Inicio` | Publica | Landing principal. |
+| `/login` | `LoginVotante` | Publica | Login votante. |
+| `/registro/*` | `RegistroLayout` | Publica | Registro de votante. |
+| `/loginadmin` | `LoginAdmin` | Publica | Login admin. |
+| `/admin/dashboard` | `AdminDashboard` | Admin | Dashboard. |
+| `/admin/resultados` | `ControlVotacionAdmin` | Admin | Control de votacion. |
+| `/admin/votantes` | `GestionVotantesAdmin` | Admin | Gestion de votantes. |
+| `/admin/auditoria` | `AuditLogsAdmin` | Admin | Logs de auditoria. |
+| `/mfa/escaneo` | `MFAPaso1DNI` | Votante | MFA DNI. |
+| `/mfa/facial` | `MFAPaso2Facial` | Votante | MFA facial. |
+| `/mfa/webauthn` | `MFAPaso3WebAuthn` | Votante | MFA WebAuthn. |
+| `/candidatos` | `SeleccionCandidato` | Votante | Cedula de votacion. |
 
 ## Flujo Publico
 
 ```mermaid
 flowchart TD
-  A["/ Inicio"] --> B["/registro"]
+  A["/"] --> B["/registro"]
   A --> C["/login"]
   A --> D["/loginadmin"]
 ```
-
-`Inicio.jsx` tambien ejecuta `testConnection()` contra Supabase al montar la pantalla. Esa llamada imprime datos y errores en consola.
 
 ## Flujo De Registro
 
 ```mermaid
 flowchart TD
-  A["Escanear DNI"] --> B["POST /register/identity/scan"]
-  B --> C["Guardar registrationId"]
-  C --> D["Completar identidad"]
-  D --> E["PUT /register/identity/:registrationId"]
-  E --> F["Reconocimiento facial"]
-  F --> G["POST /register/face"]
-  G --> H["Registro WebAuthn"]
-  H --> I["POST /webauthn/register/options"]
-  I --> J["navigator.credentials.create"]
-  J --> K["POST /webauthn/register/verify"]
-  K --> L["Confirmacion"]
-  L --> M["Supabase update registration_status"]
+  A["/registro"] --> B["Escaneo PDF417 DNI"]
+  B --> C["scanIdentity"]
+  C --> D["registrationId"]
+  D --> E["/registro/identidad"]
+  E --> F["updateIdentity"]
+  F --> G["/registro/reconocimiento"]
+  G --> H["registerFace"]
+  H --> I["/registro/biometrico"]
+  I --> J["webauthnRegisterOptions"]
+  J --> K["navigator.credentials.create"]
+  K --> L["webauthnRegisterVerify"]
+  L --> M["/registro/verificacion"]
+  M --> N["getRegistrationSummary"]
+  N --> O["completeRegistration"]
 ```
 
-Detalles:
-
-- `RegistroEscaneDNI` lee PDF417 con `BrowserPDF417Reader`.
-- `parsearDNI` extrae DNI y nombre completo desde el texto crudo.
-- El backend devuelve `data.voter_id`; se guarda como `registrationId`.
-- `RegistroIdentidad` recupera datos por `GET /register/voter/:registrationId`.
-- `RegistroReconocimiento` carga modelos de face-api.js y captura 5 muestras validas.
-- `RegistroBiometrico` usa WebAuthn para crear una credencial de plataforma.
-- `ConfirmacionRegistro` lee tablas Supabase y solo permite finalizar si hay rostro y credencial WebAuthn.
-
-## Flujo De Login Y Voto
+## Flujo Login Votante Y Voto
 
 ```mermaid
 flowchart TD
-  A["/login"] --> B["POST /api/auth/login"]
-  B --> C{"has_voted?"}
-  C -- "si" --> X["Bloquea ingreso"]
-  C -- "no" --> D["Guardar token, voter_id y voter"]
-  D --> E["/mfa/escaneo"]
-  E --> F["POST /api/mfa/validate-dni"]
-  F --> G["/mfa/facial"]
-  G --> H["POST /api/mfa/validate-face"]
-  H --> I["/mfa/webauthn"]
-  I --> J["POST /webauthn/auth/options"]
-  J --> K["navigator.credentials.get"]
-  K --> L["POST /webauthn/auth/verify"]
-  L --> M["/candidatos"]
-  M --> N["GET /api/votes/candidates"]
-  N --> O["POST /api/votes/cast"]
+  A["/login"] --> B["loginVoter"]
+  B --> C["AuthContext.login role voter"]
+  C --> D["/mfa/escaneo"]
+  D --> E["validateDNI"]
+  E --> F["/mfa/facial"]
+  F --> G["validateFace"]
+  G --> H["/mfa/webauthn"]
+  H --> I["webauthnAuthOptions"]
+  I --> J["navigator.credentials.get"]
+  J --> K["webauthnAuthVerify"]
+  K --> L["/candidatos"]
+  L --> M["getCandidates"]
+  M --> N["castVote candidato o blank"]
 ```
-
-Persistencia local usada por este flujo:
-
-- `token`: JWT o token emitido por backend.
-- `voter_id`: identificador del votante.
-- `voter`: datos serializados del usuario.
-- `dni_barcode_valid`: bandera esperada por los pasos MFA posteriores.
-- `face_valid`: bandera marcada tras validacion facial.
-- `fingerprint_valid`: bandera marcada tras validacion WebAuthn.
 
 ## Flujo Admin
 
 ```mermaid
 flowchart TD
-  A["/loginadmin"] --> B["POST /api/admin/login"]
-  B --> C["Guardar admin_token y admin"]
+  A["/loginadmin"] --> B["loginAdmin"]
+  B --> C["AuthContext.login role admin"]
   C --> D["/admin/dashboard"]
-  D --> E["GET /api/votes/results"]
-  D --> F["GET /api/votes/total"]
-  D --> G["GET /api/votes/turnout"]
-  C --> H["/admin/resultados"]
-  C --> I["/admin/votantes"]
+  C --> E["/admin/resultados"]
+  C --> F["/admin/votantes"]
+  C --> G["/admin/auditoria"]
+  D --> H["resultados + participacion + auditoria"]
+  E --> I["modal confirmar apertura/cierre"]
+  G --> J["logs cada 15s"]
 ```
 
-Notas:
+## Rutas Protegidas
 
-- `AdminDashboard` consume datos reales de resultados, total y participacion.
-- `ControlVotacionAdmin` usa estado local para alternar `votingOpen`; no persiste el cambio en backend.
-- `GestionVotantesAdmin` muestra datos mock definidos en el archivo.
-- `AdminSidebar` elimina `admin_token` y `admin` al cerrar sesion.
+`ProtectedRoute` decide:
+
+- Sin sesion: redirige a `/login` o `/loginadmin`.
+- Con `adminOnly`: exige `isAdmin`.
+- Durante carga: renderiza `auth-loading`.
 

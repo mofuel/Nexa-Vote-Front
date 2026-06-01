@@ -1,17 +1,20 @@
 # 01. Inicio Rapido
 
-## Instalacion Local
+## Objetivo
 
-```bash
-npm install
-npm run dev
-```
+Levantar Nexa Vote Front localmente y conocer los scripts disponibles. Esta version contempla el estado de `main` y la adicion de Cypress en `Pruebas`.
 
-La app queda disponible normalmente en `http://localhost:5173`.
+## Requisitos
+
+- Node.js 20 o compatible.
+- Backend de Nexa Vote disponible.
+- Proyecto Supabase configurado.
+- Navegador moderno con soporte de camara y WebAuthn.
+- Modelos de `face-api.js` publicados en `public/models`.
 
 ## Variables De Entorno
 
-El frontend usa variables de entorno de Vite, por lo que todas deben iniciar con `VITE_`.
+Crear `.env`:
 
 ```env
 VITE_API_URL=http://localhost:3000
@@ -19,60 +22,67 @@ VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
 VITE_SUPABASE_ANON_KEY=tu_clave_anonima
 ```
 
-Responsabilidades:
+`VITE_API_URL` es la base usada por `src/services/api.js`.
 
-- `VITE_API_URL`: URL base del backend REST.
-- `VITE_SUPABASE_URL`: URL del proyecto Supabase.
-- `VITE_SUPABASE_ANON_KEY`: clave publica anonima para consultas del cliente.
+## Instalacion
 
-## Scripts Disponibles
+```bash
+npm install
+npm run dev
+```
 
-| Script | Comando | Uso |
-| --- | --- | --- |
-| Desarrollo | `npm run dev` | Levanta Vite con hot reload. |
-| Build | `npm run build` | Genera `dist/` para produccion. |
-| Preview | `npm run preview` | Sirve el build localmente. |
-| Lint | `npm run lint` | Ejecuta ESLint sobre el proyecto. |
+La app corre normalmente en:
 
-## Build Con Docker
+```text
+http://localhost:5173
+```
 
-El `Dockerfile` usa Node 20, instala dependencias, recibe variables como argumentos, compila y sirve con `vite preview` en el puerto `10000`.
+## Scripts
+
+| Script | Descripcion |
+| --- | --- |
+| `npm run dev` | Inicia Vite en desarrollo. |
+| `npm run build` | Genera build de produccion. |
+| `npm run preview` | Sirve el build generado. |
+| `npm run lint` | Ejecuta ESLint. |
+| `npm run test:e2e` | Abre Cypress interactivo. |
+| `npm run test:e2e:run` | Ejecuta Cypress headless. |
+
+Los scripts `test:e2e` y `test:e2e:run` vienen de `Pruebas`.
+
+## Docker
+
+`Dockerfile`:
+
+- Usa `node:20`.
+- Instala dependencias.
+- Recibe variables como `ARG`.
+- Ejecuta `npm run build`.
+- Expone puerto `10000`.
+- Sirve con `vite preview`.
+
+Ejemplo:
 
 ```bash
 docker build \
   --build-arg VITE_API_URL=https://api.ejemplo.com \
   --build-arg VITE_SUPABASE_URL=https://tu-proyecto.supabase.co \
-  --build-arg VITE_SUPABASE_ANON_KEY=tu_clave_anonima \
+  --build-arg VITE_SUPABASE_ANON_KEY=tu_clave \
   -t nexa-vote-front .
 
 docker run -p 10000:10000 nexa-vote-front
 ```
 
-## Preview En Produccion
+## Diagrama De Arranque
 
-`vite.config.js` configura:
-
-- `preview.port = 10000`
-- `preview.host = true`
-- `allowedHosts = ['nexa-vote-front.onrender.com']`
-
-Esto indica que el despliegue esta preparado para un host tipo Render.
-
-## Requisitos Del Navegador
-
-Para probar todos los flujos se necesita:
-
-- Camara habilitada.
-- Contexto seguro para WebAuthn. En produccion debe ser HTTPS. En local, `localhost` suele ser aceptado.
-- Soporte de `navigator.credentials.create` y `navigator.credentials.get`.
-- Permisos de archivo/camara para cargar fotos del DNI o capturar rostro.
-
-## Verificacion Manual Basica
-
-1. Abrir `/`.
-2. Validar que la landing cargue sin errores.
-3. Probar `/registro` con una imagen de DNI compatible PDF417.
-4. Probar `/login` con credenciales del backend.
-5. Revisar que los modelos de `public/models` carguen antes de usar reconocimiento facial.
-6. Probar `/loginadmin` con credenciales administrativas.
+```mermaid
+flowchart TD
+  A["npm install"] --> B["Variables VITE_*"]
+  B --> C["npm run dev"]
+  C --> D["Vite localhost:5173"]
+  D --> E["React App"]
+  E --> F["Backend VITE_API_URL"]
+  E --> G["Supabase"]
+  E --> H["Modelos /public/models"]
+```
 

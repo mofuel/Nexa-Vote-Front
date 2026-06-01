@@ -1,165 +1,117 @@
 # 04. API Y Datos
 
-## Configuracion
+## Configuracion Base
 
-`src/config/api.js` exporta:
+`src/config/api.js` exporta `VITE_API_URL`.
 
-```js
-const API_URL = import.meta.env.VITE_API_URL;
-export default API_URL;
-```
+`src/services/api.js` contiene `apiFetch`, que:
 
-Todas las llamadas al backend dependen de esa variable.
+- Lee `token` o `admin_token` de `sessionStorage`.
+- Agrega `Content-Type: application/json`.
+- Agrega `Authorization: Bearer`.
+- Si recibe 401, limpia sesion y dispara `auth:logout`.
 
-## Endpoints Consumidos
+## Endpoints
 
-| Metodo | Endpoint | Usado en | Proposito |
-| --- | --- | --- | --- |
-| `POST` | `/api/auth/login` | `loginVoter` | Login de votante con `dni` y `password`. |
-| `GET` | `/auth/me` | `getCurrentUser` | Obtener usuario actual usando `Authorization: Bearer`. |
-| `POST` | `/validation/multifactor` | `validateMultifactor` | Validacion MFA generica. Actualmente importada en MFA WebAuthn pero no usada. |
-| `GET` | `/api/votes/candidates` | `getCandidates` | Lista candidatos para la cedula. |
-| `POST` | `/api/votes/cast` | `castVote` | Registra voto con `candidate_id`. |
-| `GET` | `/reports/summary` | `getReport` | Resumen de reportes. No se usa actualmente en pantallas. |
-| `POST` | `/api/admin/login` | `loginAdmin` | Login administrativo con email/password. |
-| `GET` | `/api/votes/results` | `getVoteResults` | Resultados por candidato. |
-| `GET` | `/api/votes/total` | `getTotalVotes` | Total de votos emitidos. |
-| `GET` | `/api/votes/turnout` | `getTurnout` | Porcentaje de participacion. |
-| `POST` | `/api/mfa/validate-dni` | `MFAPaso1DNI` | Valida DNI escaneado durante MFA. |
-| `POST` | `/api/mfa/validate-face` | `MFAPaso2Facial` | Valida descriptor facial durante MFA. |
-| `POST` | `/register/identity/scan` | `RegistroEscaneDNI` | Crea registro inicial desde DNI escaneado. |
-| `GET` | `/register/voter/:registrationId` | `RegistroIdentidad` | Recupera datos iniciales del votante. |
-| `PUT` | `/register/identity/:registrationId` | `RegistroIdentidad` | Completa datos personales del votante. |
-| `POST` | `/register/face` | `RegistroReconocimiento` | Guarda descriptor facial del registro. |
-| `POST` | `/webauthn/register/options` | `RegistroBiometrico` | Solicita challenge para registrar credencial. |
-| `POST` | `/webauthn/register/verify` | `RegistroBiometrico` | Verifica y guarda credencial WebAuthn. |
-| `POST` | `/webauthn/auth/options` | `MFAPaso3WebAuthn` | Solicita challenge para autenticar WebAuthn. |
-| `POST` | `/webauthn/auth/verify` | `MFAPaso3WebAuthn` | Verifica credencial WebAuthn. |
+| Funcion | Metodo | Endpoint |
+| --- | --- | --- |
+| `loginVoter` | POST | `/api/auth/login` |
+| `getCurrentUser` | GET | `/auth/me` |
+| `validateMultifactor` | POST | `/validation/multifactor` |
+| `getCandidates` | GET | `/api/votes/candidates` |
+| `castVote` | POST | `/api/votes/cast` |
+| `getReport` | GET | `/reports/summary` |
+| `loginAdmin` | POST | `/api/admin/login` |
+| `getVoteResults` | GET | `/api/votes/results` |
+| `getTotalVotes` | GET | `/api/votes/total` |
+| `getTurnout` | GET | `/api/votes/turnout` |
+| `getTurnoutDetailed` | GET | `/api/votes/turnout-detailed` |
+| `validateDNI` | POST | `/api/mfa/validate-dni` |
+| `validateFace` | POST | `/api/mfa/validate-face` |
+| `webauthnAuthOptions` | POST | `/webauthn/auth/options` |
+| `webauthnAuthVerify` | POST | `/webauthn/auth/verify` |
+| `scanIdentity` | POST | `/register/identity/scan` |
+| `getVoter` | GET | `/register/voter/:id` |
+| `updateIdentity` | PUT | `/register/identity/:id` |
+| `registerFace` | POST | `/register/face` |
+| `webauthnRegisterOptions` | POST | `/webauthn/register/options` |
+| `webauthnRegisterVerify` | POST | `/webauthn/register/verify` |
+| `getRegistrationSummary` | GET | `/register/summary/:id` |
+| `completeRegistration` | PUT | `/register/complete/:id` |
+| `getAuditLogs` | GET | `/api/admin/audit-logs` |
+| `getVoteReport` | GET | `/api/votes/report` |
 
-## Contratos Esperados Del Backend
+## Storage
 
-### Login de votante
+### `sessionStorage`
 
-Entrada:
+| Clave | Uso |
+| --- | --- |
+| `token` | Token de sesion actual. |
+| `admin_token` | Token administrativo. |
+| `voter` | Datos del votante. |
+| `admin` | Datos del administrador. |
+| `voter_id` | ID del votante. |
 
-```json
-{
-  "dni": "12345678",
-  "password": "secret"
-}
-```
+### `localStorage`
 
-Respuesta esperada:
+| Clave | Uso |
+| --- | --- |
+| `theme` | Tema claro/oscuro. |
+| `registrationId` | ID del registro en progreso. |
+| `nexavote_sidebar_open` | Estado visual del sidebar admin. |
+
+## Contratos Esperados
+
+Login votante:
 
 ```json
 {
   "success": true,
   "data": {
     "token": "jwt",
-    "user": { "id": "voter-id" },
+    "user": { "id": "uuid" },
     "has_voted": false
   }
 }
 ```
 
-### Lista de candidatos
+Resultados:
 
-Respuesta esperada:
+```json
+{
+  "success": true,
+  "data": [
+    { "candidate_name": "Nombre", "total": 10 }
+  ]
+}
+```
+
+Auditoria:
 
 ```json
 {
   "success": true,
   "data": [
     {
-      "id": "candidate-id",
-      "name": "Nombre",
-      "party": "Partido",
-      "photo_url": "https://..."
+      "id": "uuid",
+      "created_at": "2026-05-31T00:00:00Z",
+      "action_type": "VOTE_CAST",
+      "status": "success",
+      "ip_address": "127.0.0.1",
+      "voter_id": "uuid",
+      "metadata": {}
     }
   ]
 }
 ```
 
-### Resultados
-
-`AdminDashboard` espera objetos con:
-
-```json
-{
-  "candidate_name": "Nombre",
-  "total": 10
-}
-```
-
-### Registro inicial por DNI
-
-Entrada:
-
-```json
-{
-  "dni": "12345678",
-  "full_name": "Nombre Apellido"
-}
-```
-
-Respuesta esperada:
-
-```json
-{
-  "success": true,
-  "data": {
-    "voter_id": "uuid"
-  }
-}
-```
-
 ## Supabase
 
-`src/lib/supabaseClient.js` crea el cliente con:
+El cliente sigue disponible en `src/lib/supabaseClient.js`, pero la confirmacion de registro actual usa backend:
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+- `getRegistrationSummary`
+- `completeRegistration`
 
-Tablas consultadas en `ConfirmacionRegistro`:
-
-| Tabla | Campos usados | Uso |
-| --- | --- | --- |
-| `voters` | `*` | Datos principales del votante. |
-| `biometric_data` | `face_embedding` | Verificar si el rostro fue registrado. |
-| `webauthn_credentials` | `credential_id` | Verificar si WebAuthn fue registrado. |
-| `registration_status` | `current_step`, `status`, `completed_at` | Leer y finalizar estado de registro. |
-
-`finishRegistration` actualiza:
-
-```js
-{
-  current_step: 4,
-  status: "completed",
-  completed_at: new Date()
-}
-```
-
-## localStorage
-
-| Clave | Escrita por | Leida por | Uso |
-| --- | --- | --- | --- |
-| `registrationId` | `RegistrationProvider.setRegistrationId` | Registro completo | Identifica el registro en progreso. |
-| `token` | `LoginVotante` | MFA y voto | Autoriza endpoints del votante. |
-| `voter_id` | `LoginVotante` | WebAuthn auth | Relaciona credencial con votante. |
-| `voter` | `LoginVotante` | Disponible para UI futura | Datos serializados del votante. |
-| `dni_barcode_valid` | Esperada por MFA | `MFAPaso2Facial`, `MFAPaso3WebAuthn` | Bandera de DNI validado. |
-| `face_valid` | `MFAPaso2Facial` | `MFAPaso3WebAuthn` | Bandera de rostro validado. |
-| `fingerprint_valid` | `MFAPaso3WebAuthn` | Disponible para UI futura | Bandera de WebAuthn validado. |
-| `admin_token` | `LoginAdmin` | Admin futuro | Token de administrador. |
-| `admin` | `LoginAdmin` | Admin futuro | Datos serializados del admin. |
-
-## Datos Mock
-
-Hay pantallas con datos estaticos:
-
-- `AdminDashboard`: `auditLogs`.
-- `ControlVotacionAdmin`: cifras visuales de votos y participacion.
-- `GestionVotantesAdmin`: arreglo `voters`, filtros y badges.
-
-Estos datos deben conectarse a backend si se busca operacion real.
+Esto reduce acoplamiento directo entre UI y tablas Supabase.
 

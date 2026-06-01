@@ -1,74 +1,68 @@
 # 07. Estilos Y UI
 
-## Sistema Visual
+## Tema
 
-La interfaz usa una estetica oscura institucional con acentos:
+`ThemeContext` controla el tema:
 
-- Fondo principal: tonos oscuros cercanos a `#14121c`.
-- Acento verde: `#41eec2`.
-- Acento violeta: `#6c47ff` y `#c9beff`.
-- Texto principal: `#e6e0ef`.
-- Texto secundario: `#c9c3d9`.
+- Guarda `theme` en `localStorage`.
+- Aplica `data-theme` en `document.documentElement`.
+- Expone `toggleTheme`.
 
-## Fuentes
+## Variables Visuales
 
-`index.html` carga Google Fonts:
+El estado actualizado usa variables como:
 
-- `Inter`: texto general.
-- `Space Grotesk`: titulos, etiquetas tecnicas y elementos de dashboard.
+- `--bg-page`
+- `--bg-glass`
+- `--border`
+- `--text-primary`
+- `--text-secondary`
 
-Tambien carga Material Symbols Outlined para iconos.
+## Tipografias E Iconos
 
-## Organizacion De CSS
+`index.html` carga:
 
-El CSS esta separado por pantalla:
+- Inter.
+- Space Grotesk.
+- Material Symbols Outlined.
 
-- `src/css/Inicio.css`
-- `src/css/votante/*`
-- `src/css/registro/*`
-- `src/css/admin/*`
+## Convenciones CSS
 
-Ademas, varias pantallas admin usan estilos inline en JSX. Esto permite prototipado rapido, pero dificulta reutilizacion y mantenimiento si el panel crece.
+Los prefijos por pantalla siguen siendo:
 
-## Componentes Reutilizables
+- `in-`: inicio.
+- `lv-`: login votante.
+- `mfa1-`, `mfa2-`, `mfa3-`: MFA.
+- `sc-`: seleccion candidato.
+- `ri-`, `rr-`, `rb-`, `cr-`: registro.
+- `la-`: login admin.
 
-- `Footer` y `AdminFooter`: pie de pagina.
-- `AdminHeader`: cabecera del panel admin.
-- `AdminSidebar`: navegacion lateral admin.
-- `Stepper`: progreso de registro.
-- `MFAStepper`: progreso de MFA.
+## UI Nueva O Relevante
 
-## Estados Visuales
+- Toggle de tema en votacion y confirmacion de registro.
+- Logout visible en cedula de votacion.
+- Voto en blanco como tarjeta especial.
+- Dashboard con grafico circular de participacion.
+- Dashboard con grafico de candidatos.
+- Modal de confirmacion para abrir/cerrar votacion.
+- Vista dedicada de auditoria.
 
-Patrones usados:
+## Mapa Visual
 
-- Loading con texto dinamico.
-- Mensajes de error y exito por estado local.
-- Toasts con Sonner.
-- Barras de progreso para captura facial.
-- Tarjetas seleccionables para candidatos.
-- Badges de seguridad y verificacion.
+```mermaid
+flowchart LR
+  A["ThemeContext"] --> B["data-theme"]
+  B --> C["CSS variables"]
+  C --> D["Publico"]
+  C --> E["Votante"]
+  C --> F["Registro"]
+  C --> G["Admin"]
+```
 
-## Assets Visuales
+## Recomendaciones
 
-- `src/assets/hero.png` esta disponible para hero o secciones visuales.
-- `public/favicon.svg` se usa como favicon.
-- `public/icons.svg` esta disponible como asset publico.
-- Algunas pantallas usan imagenes remotas de Googleusercontent como avatar.
-
-## Convenciones Actuales
-
-- Los nombres de clases suelen llevar prefijo por pantalla: `lv-`, `mfa1-`, `mfa2-`, `mfa3-`, `sc-`, `ri-`, `rr-`, `rb-`, `cr-`, `la-`.
-- Los textos mezclan espanol e ingles en algunas secciones administrativas.
-- Hay estilos heredados de template en `src/App.css` que actualmente no forman parte del flujo principal.
-
-## Recomendacion De Mantenimiento UI
-
-Si se continua el desarrollo, conviene:
-
-- Mover estilos inline admin a CSS o componentes reutilizables.
-- Unificar idioma visible.
-- Consolidar colores en variables CSS.
-- Eliminar estilos del template que no se usan.
-- Reemplazar imagenes remotas de avatar por assets propios o datos reales.
+- Mover estilos inline admin a CSS o componentes.
+- Consolidar colores en variables.
+- Mantener idioma consistente.
+- Eliminar assets heredados no usados si ya no aplican.
 
