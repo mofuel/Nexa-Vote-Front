@@ -98,3 +98,15 @@
 | `cypress/support/commands.js` | Comandos custom placeholder. |
 | `cypress/fixtures/example.json` | Fixture de ejemplo. |
 
+## k6
+
+La rama `Pruebas` tambien agrega una carpeta `K6/` para pruebas de carga contra el backend desplegado en Render.
+
+| Archivo | Descripcion |
+| --- | --- |
+| `K6/health-test.js` | Prueba de salud contra `/`. |
+| `K6/candidates-test.js` | Carga progresiva sobre `/api/votes/candidates` con check de status 200. |
+| `K6/login-test.js` | Carga sobre `/api/auth/login` usando credenciales de prueba. |
+| `K6/register-test.js` | Crea payloads aleatorios para `/register/identity`. |
+| `K6/stress-test.js` | Escenario de stress sobre `/register/identity`. |
+| `K6/spike-test.js` | Pico rapido sobre `/api/votes/candidates`. |

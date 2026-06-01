@@ -5,9 +5,9 @@ Frontend web de Nexa Vote, sistema de voto electronico construido con React y Vi
 Esta documentacion mantiene la estructura extendida anterior, actualizada contra:
 
 - `main`: `10e953fc1b3172e57fc9d1d762457aedbc3792dc`
-- `Pruebas`: `15053091e34f378d135b65410c7e4cd1b0818765`
+- `Pruebas`: `9d51ed5117a325f9d4168d01a6ca9b8f5d06eff5`
 
-`Pruebas` esta un commit por delante de `main` y agrega Cypress/E2E. La documentacion integra ambos estados en una sola vision del proyecto.
+`Pruebas` agrega Cypress/E2E y pruebas de carga k6. La documentacion integra ambos estados en una sola vision del proyecto.
 
 ## Indice De Documentacion
 
@@ -21,6 +21,7 @@ Esta documentacion mantiene la estructura extendida anterior, actualizada contra
 - [docs/08-admin-y-auditoria.md](docs/08-admin-y-auditoria.md): dashboard, auditoria, control y gestion.
 - [docs/09-pruebas-e2e.md](docs/09-pruebas-e2e.md): Cypress en la rama `Pruebas`.
 - [docs/10-mantenimiento.md](docs/10-mantenimiento.md): checklist, pendientes y recomendaciones.
+- [docs/11-pruebas-k6.md](docs/11-pruebas-k6.md): pruebas de carga k6 agregadas en `Pruebas`.
 
 ## Inicio Rapido
 
@@ -46,4 +47,5 @@ npm run preview
 npm run lint
 npm run test:e2e
 npm run test:e2e:run
+k6 run K6/health-test.js
 ```

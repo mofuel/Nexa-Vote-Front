@@ -2,7 +2,7 @@
 
 ## Origen
 
-Las pruebas E2E fueron agregadas en la rama `Pruebas`, que esta un commit por delante de `main`.
+Las pruebas E2E fueron agregadas en la rama `Pruebas` antes del commit posterior que sumo k6. Esta seccion documenta solo Cypress; las pruebas de carga estan en `docs/11-pruebas-k6.md`.
 
 ## Dependencias Y Scripts
 
@@ -69,4 +69,3 @@ flowchart TD
 ## Observacion
 
 `protected-routes.cy.js` visita `/admin`, pero las rutas reales definidas son `/admin/dashboard`, `/admin/resultados`, `/admin/votantes` y `/admin/auditoria`. Conviene ajustar el test para usar rutas reales.
-

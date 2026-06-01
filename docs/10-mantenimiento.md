@@ -6,6 +6,7 @@
 npm run lint
 npm run build
 npm run test:e2e:run
+k6 run K6/health-test.js
 ```
 
 ## Pruebas Manuales
@@ -31,6 +32,7 @@ npm run test:e2e:run
 - Persistir apertura/cierre de votacion en backend.
 - Conectar completamente gestion de votantes a backend.
 - Revisar y alinear tests Cypress con rutas reales.
+- Parametrizar scripts k6 para no depender de URLs y credenciales hardcodeadas.
 - Implementar o eliminar `FaceStep.jsx`.
 - Reducir estilos inline del admin.
 - Agregar tests unitarios para parseo de DNI.
@@ -52,6 +54,6 @@ npm run test:e2e:run
 2. Evitar llamadas `fetch` directas nuevas desde pantallas.
 3. Documentar cambios de contrato API aqui.
 4. Mantener tests E2E por flujo critico.
-5. Migrar mocks admin a backend o fixtures.
-6. Mantener diagramas Mermaid actualizados cuando cambien rutas o flujos.
-
+5. Mantener pruebas k6 para endpoints criticos del backend.
+6. Migrar mocks admin a backend o fixtures.
+7. Mantener diagramas Mermaid actualizados cuando cambien rutas o flujos.
