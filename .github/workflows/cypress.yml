@@ -21,20 +21,21 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
-      - name: Ejecutar Cypress con reporte JSON
+      - name: Ejecutar Cypress con reporte XML
         run: |
+          mkdir -p cypress/results
           npx cypress run \
-          --reporter json \
-          --reporter-options output=results.json
+            --reporter mocha-junit-reporter \
+            --reporter-options mochaFile=cypress/results/results-[hash].xml,toConsole=true
         env:
           CYPRESS_BASE_URL: https://nexa-vote-front.onrender.com
 
-      - name: Verificar reporte generado
-        run: ls -la
+      - name: Verificar reportes
+        run: ls -R cypress/results
 
-      - name: Subir reporte JSON
+      - name: Subir reportes Cypress
         uses: actions/upload-artifact@v4
         with:
           name: cypress-report
-          path: results.json
+          path: cypress/results/*.xml
           retention-days: 7
