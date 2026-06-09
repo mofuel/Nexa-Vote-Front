@@ -1,0 +1,27 @@
+name: Cypress Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout rama Pruebas
+        uses: actions/checkout@v4
+        with:
+          ref: Pruebas
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Ejecutar Cypress
+        run: npx cypress run
+        env:
+          CYPRESS_BASE_URL: https://nexa-vote-front.onrender.com
