@@ -21,7 +21,20 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
-      - name: Ejecutar Cypress
-        run: npx cypress run
+      - name: Ejecutar Cypress con reporte JSON
+        run: |
+          npx cypress run \
+          --reporter json \
+          --reporter-options output=results.json
         env:
           CYPRESS_BASE_URL: https://nexa-vote-front.onrender.com
+
+      - name: Verificar reporte generado
+        run: ls -la
+
+      - name: Subir reporte JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-report
+          path: results.json
+          retention-days: 7
